@@ -2,7 +2,7 @@
 
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { createGeminiClient } from "./gemini/client.js";
+import { buildProvider, createImageProvider } from "./providers/index.js";
 import { createRateLimiter } from "./lib/rateLimit.js";
 import { createStaticHandler } from "./lib/static.js";
 import { createGenerateHandler } from "./routes/generate.js";
@@ -17,18 +17,16 @@ const SECURITY_HEADERS = {
   "Permissions-Policy": "camera=(self), microphone=(), geolocation=()",
 };
 
-export function createApp(config, { gemini, logger = console, publicDir = PUBLIC_DIR } = {}) {
-  const geminiClient =
-    gemini ||
-    createGeminiClient({
-      apiKey: config.geminiApiKey,
-      model: config.geminiModel,
-      apiBase: config.geminiApiBase,
-      timeoutMs: config.geminiTimeoutMs,
-    });
+// deps.provider: inject a ready provider (tests). deps.gemini: inject a fake Gemini client (tests).
+export function createApp(config, { provider, gemini, fetchImpl, logger = console, publicDir = PUBLIC_DIR } = {}) {
+  const imageProvider =
+    provider ||
+    (gemini
+      ? buildProvider("gemini", config, { geminiClient: gemini, logger })
+      : createImageProvider(config, { logger, fetchImpl }));
 
   const rateLimiter = createRateLimiter({ limit: config.rateLimitPerHour });
-  const handleGenerate = createGenerateHandler({ config, gemini: geminiClient, rateLimiter, logger });
+  const handleGenerate = createGenerateHandler({ config, provider: imageProvider, rateLimiter, logger });
   const serveStatic = createStaticHandler(publicDir);
 
   return async function app(req, res) {
@@ -37,7 +35,7 @@ export function createApp(config, { gemini, logger = console, publicDir = PUBLIC
 
     try {
       if (pathname === "/api/health") {
-        return sendJson(res, 200, { ok: true, configured: Boolean(config.geminiApiKey) });
+        return sendJson(res, 200, { ok: true, provider: imageProvider.name, configured: imageProvider.configured });
       }
       if (pathname === "/api/generate") {
         if (req.method !== "POST") return sendJson(res, 405, { error: "Method not allowed." }, { Allow: "POST" });

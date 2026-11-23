@@ -23,7 +23,7 @@ export const THEME = {
 
 export const SETTINGS = {
   apiEndpoint: "/api/generate",
-  requestTimeoutMs: 150_000,
+  requestTimeoutMs: 280_000,
   maxPhotoEdge: 1536, // enough detail for fabric texture, small enough to upload quickly
   photoQuality: 0.9,
   maxFileBytes: 30 * 1024 * 1024,
@@ -35,6 +35,7 @@ export const SETTINGS = {
     "Sketching in ink…",
     "Painting the watercolour…",
     "Adding the finishing touches…",
+    "Warming up the studio, nearly there…",
   ],
   progressIntervalMs: 7000,
 };

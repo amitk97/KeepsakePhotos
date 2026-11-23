@@ -2,9 +2,12 @@
 
 A wedding keepsake studio for **Pooja & Amit**. Guests take or upload a photo, add a message, and get a hand-painted watercolour caricature (outfit and all) in a framed 4×6 keepsake they can save to their phone.
 
+- **Runs entirely in the cloud:** the website on Render, and the AI (**FLUX.1 Kontext**, free open model) on a **Modal** serverless GPU that only runs, and only costs, while painting.
+- **No per-image AI fees:** you pay for GPU seconds, not per portrait. Gemini can be added as an automatic backup.
+- **Outfit-faithful:** FLUX Kontext edits the guest's photo, keeping colours, fabrics, embroidery and jewellery.
 - **No dependencies:** plain Node.js server plus vanilla JavaScript modules. No build step.
-- **API key stays secret:** the browser talks to this server, and only the server talks to Gemini.
-- **Two-step AI:** Gemini first writes a detailed description of each outfit (colours, fabric, texture, embroidery, drape, jewellery), then paints the caricature using the photo and that description.
+
+👉 **New here? Follow [SETUP.md](SETUP.md)**: about 30 minutes, nothing to install.
 
 ## Run it locally
 
@@ -21,6 +24,8 @@ Get a key at <https://aistudio.google.com/apikey>.
 
 ## Deploy
 
+Recommended: follow [SETUP.md](SETUP.md) (Render + Modal). Other hosts also work for the website:
+
 GitHub Pages can't be used, because it can't keep the API key secret. Any host that runs Node or Docker works:
 
 | Host | How |
@@ -34,7 +39,11 @@ Environment variables (see `.env.example`):
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `GEMINI_API_KEY` | ✅ | | Your Gemini key |
+| `IMAGE_PROVIDER` | | `flux` if `FLUX_ENDPOINT_URL` set, else `gemini` | Which AI paints |
+| `FLUX_ENDPOINT_URL` | ✅ (flux) | | Modal `generate` endpoint URL |
+| `FLUX_API_TOKEN` | ✅ (flux) | | Shared secret, same as the Modal `keepsake-flux-auth` secret |
+| `IMAGE_FALLBACK` | | | e.g. `gemini`: automatic backup if FLUX fails |
+| `GEMINI_API_KEY` | ✅ (gemini) | | Gemini key, for Gemini mode or the backup |
 | `GEMINI_IMAGE_MODEL` | | `gemini-3.1-flash-image` | Model for both steps |
 | `ALLOWED_ORIGIN` | | | e.g. `https://keepsake.example.com`; blocks other sites using your server |
 | `RATE_LIMIT_PER_HOUR` | | `15` | Portraits per guest IP per hour |
@@ -51,10 +60,15 @@ server/
   app.js              routes: /api/generate, /api/health, static files
   config.js           reads environment variables
   routes/generate.js  validates the upload, rate-limits, returns the portrait
+  providers/          flux.js, gemini.js, index.js (pick + fallback), errors.js
   gemini/client.js    Gemini REST client (timeouts, retries on 429/5xx only)
   gemini/caricature.js  describe outfit → paint caricature
   gemini/prompts.js   ← tune the AI wording here
   lib/                http helpers, rate limiter, static file server
+flux-service/
+  flux_app.py         FLUX Kontext on Modal (prompt, GPU, warm/scale settings)
+.github/workflows/    deploy FLUX to Modal (button in Actions tab), run tests
+render.yaml           one-click website setup on Render
 public/
   index.html, css/styles.css, favicon.svg
   js/config.js        ← wedding names, date, preset messages, colours
@@ -74,7 +88,7 @@ test/
 ## Testing
 
 ```bash
-npm test                         # 24 server & layout tests, no key needed
+npm test                         # 34 server, provider & layout tests, no keys needed
 python3 test/e2e/run_e2e.py      # full guest journey in Chrome (needs Playwright + Pillow)
 ```
 

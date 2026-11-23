@@ -1,0 +1,39 @@
+# Deploys the FLUX caricature service to Modal from GitHub. No software needed on your computer.
+# Run it from the repo's Actions tab → "Deploy FLUX to Modal" → Run workflow.
+name: Deploy FLUX to Modal
+
+on:
+  workflow_dispatch:
+    inputs:
+      warm:
+        description: "Keep a GPU warm (instant portraits, charged by the hour). Use 1 for the wedding, 0 afterwards."
+        required: true
+        default: "0"
+        type: choice
+        options: ["0", "1", "2"]
+      max_gpus:
+        description: "Most GPUs at once (caps cost; more = shorter queues)"
+        required: true
+        default: "4"
+        type: choice
+        options: ["1", "2", "4", "6"]
+  push:
+    branches: [main]
+    paths: ["flux-service/**"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install modal
+      - name: Deploy
+        env:
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+          KEEPSAKE_WARM: ${{ inputs.warm || '0' }}
+          KEEPSAKE_MAX_GPUS: ${{ inputs.max_gpus || '4' }}
+        run: modal deploy flux-service/flux_app.py

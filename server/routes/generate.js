@@ -2,19 +2,18 @@
 // Response: { image: "data:image/png;base64,..." }  or  { error: "..." }
 
 import { HttpError, clientIp, readJsonBody, sendJson } from "../lib/http.js";
-import { GeminiError } from "../gemini/client.js";
-import { NoImageError, createCaricature } from "../gemini/caricature.js";
+import { NoImageError, ProviderBusyError } from "../providers/errors.js";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
-export function createGenerateHandler({ config, gemini, rateLimiter, logger = console }) {
+export function createGenerateHandler({ config, provider, rateLimiter, logger = console }) {
   return async function handleGenerate(req, res) {
     if (config.allowedOrigin && req.headers.origin && req.headers.origin !== config.allowedOrigin) {
       return sendJson(res, 403, { error: "Not allowed." });
     }
-    if (!config.geminiApiKey) {
-      logger.error("GEMINI_API_KEY is not set");
+    if (!provider.configured) {
+      logger.error(`Image provider "${provider.name}" is not configured (check FLUX_* / GEMINI_API_KEY)`);
       return sendJson(res, 500, { error: "The art studio isn't set up yet. Please tell the hosts." });
     }
 
@@ -47,7 +46,7 @@ export function createGenerateHandler({ config, gemini, rateLimiter, logger = co
     }
 
     try {
-      const result = await createCaricature(gemini, { imageBase64: image, mimeType, logger });
+      const result = await provider.createCaricature({ imageBase64: image, mimeType });
       return sendJson(res, 200, { image: `data:${result.mimeType};base64,${result.data}` });
     } catch (err) {
       logger.error("Generation failed:", err.message);
@@ -55,7 +54,7 @@ export function createGenerateHandler({ config, gemini, rateLimiter, logger = co
         return sendJson(res, 422, { error: "The artist couldn't paint this photo. Please try a different photo." });
       }
       rateLimiter.refund(ip); // not the guest's fault, so don't count it
-      if (err instanceof GeminiError && err.status === 429) {
+      if (err instanceof ProviderBusyError) {
         return sendJson(res, 503, { error: "The art studio is busy right now. Please try again in a minute." });
       }
       return sendJson(res, 502, { error: "Unable to reach the art studio. Please try again." });

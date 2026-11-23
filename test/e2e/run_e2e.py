@@ -53,6 +53,16 @@ class FakeGemini(BaseHTTPRequestHandler):
 
     def do_POST(self):
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        if self.path == "/flux":
+            FakeGemini.requests.append({"path": "/flux", "auth": self.headers.get("Authorization"), "body": body})
+            time.sleep(1)
+            payload = json.dumps({"image": FAKE_ART, "mimeType": "image/png", "seconds": 1.0}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+            return
         FakeGemini.requests.append({"path": self.path, "key": self.headers.get("x-goog-api-key"), "body": body})
         if FakeGemini.mode == "fail":
             self.send_response(400)
@@ -207,6 +217,37 @@ def main():
             expect(lp.locator("#cameraModal")).to_be_hidden()
             expect(lp.locator("#photoPreviewContainer")).to_be_visible()
             laptop_browser.close()
+
+            # ---- FLUX mode: same guest journey, painted by the (fake) Modal service ----
+            flux_port = free_port()
+            flux_env = {**env, "PORT": str(flux_port), "GEMINI_API_KEY": "",
+                        "FLUX_ENDPOINT_URL": f"http://127.0.0.1:{gemini_port}/flux", "FLUX_API_TOKEN": "flux-secret"}
+            flux_server = subprocess.Popen(["node", "server/index.js"], cwd=ROOT, env=flux_env)
+            try:
+                for _ in range(50):
+                    try:
+                        socket.create_connection(("127.0.0.1", flux_port), 0.2).close()
+                        break
+                    except OSError:
+                        time.sleep(0.1)
+                fctx = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
+                fp = fctx.new_page()
+                fp.goto(f"http://127.0.0.1:{flux_port}")
+                health = fp.evaluate("() => fetch('/api/health').then(r => r.json())")
+                assert health == {"ok": True, "provider": "flux", "configured": True}, health
+                fp.click("[data-action=begin]")
+                fp.set_input_files("#fileInput", str(photo))
+                expect(fp.locator("#submitBtn")).to_be_enabled()
+                fp.fill("#guestName", "Flux Guest")
+                fp.click("#submitBtn")
+                expect(fp.locator("#step4")).to_be_visible(timeout=20000)
+                flux_req = [r for r in FakeGemini.requests if r["path"] == "/flux"][-1]
+                assert flux_req["auth"] == "Bearer flux-secret"
+                assert len(flux_req["body"]["image"]) > 1000
+                fp.screenshot(path=OUT / "6-flux-result.png", full_page=True)
+                fctx.close()
+            finally:
+                flux_server.terminate()
             browser.close()
     except AssertionError as e:
         failures.append(str(e))

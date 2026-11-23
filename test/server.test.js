@@ -172,7 +172,7 @@ describe("static files", () => {
 
   test("health check reports configuration", async () => {
     const res = await fetch(`${ctx.url}/api/health`);
-    assert.deepEqual(await res.json(), { ok: true, configured: true });
+    assert.deepEqual(await res.json(), { ok: true, provider: "gemini", configured: true });
   });
 });
 
