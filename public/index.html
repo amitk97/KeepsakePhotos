@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1D3B2D">
+    <meta name="description" content="Create your hand-painted wedding caricature keepsake for Pooja & Amit.">
+    <title>Pooja &amp; Amit — Wedding Portrait Keepsake</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script type="module" src="js/main.js"></script>
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="badge">Wedding Keepsake Studio</div>
+        <h1 class="couple">Pooja &amp; Amit</h1>
+        <p class="eyebrow">Somerset Estate • October 24, 2026</p>
+    </header>
+
+    <main>
+        <!-- STEP 1: WELCOME -->
+        <section id="step1" class="card glow">
+            <div class="monogram" aria-hidden="true">P&amp;A</div>
+            <div>
+                <span class="eyebrow">Hand-Drawn Caricature Portrait</span>
+                <h2>Create Your Hand-Sketched Wedding Portrait</h2>
+                <p class="lead">Take a photo or upload a picture of yourself to receive a custom watercolour &amp; ink caricature keepsake, outfit and all, complete with your personalised message for Pooja &amp; Amit.</p>
+            </div>
+            <button type="button" class="btn btn-primary btn-large" data-action="begin">
+                <span>Begin Your Portrait</span>
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+        </section>
+
+        <!-- STEP 2: DETAILS & PHOTO -->
+        <section id="step2" class="card hidden">
+            <div>
+                <span class="eyebrow">Step 1 of 2</span>
+                <h2>Guest Details &amp; Photo</h2>
+            </div>
+
+            <div id="uploadError" class="error hidden" role="alert">
+                <span aria-hidden="true">⚠️</span>
+                <div id="uploadErrorText"></div>
+            </div>
+
+            <form id="detailsForm" class="form" novalidate>
+                <div>
+                    <label for="guestName" class="field-label"><span>Your Name (or Couple Names) <span class="required">*</span></span></label>
+                    <input type="text" id="guestName" class="input" required maxlength="40" placeholder="e.g. Maya & Arjun" autocomplete="name">
+                </div>
+
+                <div>
+                    <label for="guestMessage" class="field-label">
+                        <span>Your Speech Bubble Message</span>
+                        <span id="charCounter" class="counter" aria-live="polite">0 / 60</span>
+                    </label>
+                    <input type="text" id="guestMessage" class="input" maxlength="60" placeholder="e.g. Cheers to Pooja & Amit!">
+                    <p class="hint">Quick suggestions (tap to use):</p>
+                    <div id="suggestionChips" class="chips"></div>
+                </div>
+
+                <div>
+                    <span class="field-label"><span>Your Photo <span class="required">*</span></span></span>
+                    <div class="tip">👗 <strong>Show off your outfit!</strong> Step back so you're in shot from head to knees, in good light. Your artist will copy your outfit's colours, fabrics and details.</div>
+
+                    <div id="photoSelectionButtons" class="btn-grid two">
+                        <button type="button" class="btn btn-primary" data-action="take-photo">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <span>Take a Photo</span>
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-action="choose-photo">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <span>Choose Photo</span>
+                        </button>
+                    </div>
+
+                    <!-- Phones open the camera app through this input; it opens on the first tap. -->
+                    <input type="file" id="nativeCameraInput" class="hidden" accept="image/*" capture="environment" aria-label="Take a photo">
+                    <input type="file" id="fileInput" class="hidden" accept="image/*,.heic,.heif" aria-label="Choose a photo">
+
+                    <p id="photoProcessing" class="status hidden">Preparing your photo…</p>
+
+                    <div id="photoPreviewContainer" class="preview hidden">
+                        <div class="preview-frame"><img id="photoPreviewImg" alt="Your selected photo"></div>
+                        <div class="preview-actions">
+                            <button type="button" class="btn btn-primary btn-small" data-action="take-photo">Retake Photo</button>
+                            <button type="button" class="btn btn-secondary btn-small" data-action="choose-photo">Choose Different</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="btn btn-primary btn-large" disabled>✨ Create My Portrait</button>
+            </form>
+
+            <p class="note">🔒 Privacy note: your photo is sent to Google's Gemini AI to paint your caricature. This site doesn't store it, and your finished portrait stays on your phone.</p>
+        </section>
+
+        <!-- LIVE CAMERA (laptops only; phones use the native camera app) -->
+        <div id="cameraModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Take wedding photo">
+            <div class="modal-panel">
+                <div class="modal-head">
+                    <span>Take Wedding Photo</span>
+                    <button type="button" class="icon-btn" data-action="close-camera" aria-label="Close camera">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="viewport">
+                    <video id="cameraVideo" autoplay playsinline muted class="mirror-video"></video>
+                    <div class="guide" aria-hidden="true">
+                        <div class="guide-outline"></div>
+                        <span class="guide-label">Fit head to knees inside the guide</span>
+                    </div>
+                </div>
+                <div class="camera-controls">
+                    <button type="button" class="round-btn" data-action="flip-camera" aria-label="Flip camera">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    </button>
+                    <button type="button" class="shutter" data-action="capture" aria-label="Take photo"><span></span></button>
+                    <button type="button" class="text-btn" data-action="close-camera">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3: PROCESSING -->
+        <section id="step3" class="card hidden" aria-live="polite">
+            <div class="spinner-wrap" aria-hidden="true">
+                <div class="spinner"></div>
+                <div class="spinner-icon">🎨</div>
+            </div>
+            <div>
+                <span class="eyebrow">Artist at Work</span>
+                <h2>Sketching Your Portrait…</h2>
+                <p id="processingSubtitle" class="lead pulse">Studying your outfit…</p>
+            </div>
+            <div class="aside">This usually takes 20–40 seconds. Please keep this page open.</div>
+        </section>
+
+        <!-- STEP 4: RESULT -->
+        <section id="step4" class="card hidden">
+            <div>
+                <span class="eyebrow">Your Wedding Keepsake</span>
+                <h2>Portrait Complete!</h2>
+            </div>
+            <div class="portrait">
+                <canvas id="portraitCanvas" width="1200" height="1800" role="img" aria-label="Your wedding caricature keepsake"></canvas>
+            </div>
+            <div class="btn-grid two">
+                <button type="button" id="shareBtn" class="btn btn-primary btn-large span-2 hidden" data-action="share">Save to Photos / Share</button>
+                <button type="button" class="btn btn-primary btn-large" data-action="download">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>Download PNG</span>
+                </button>
+                <button type="button" class="btn btn-secondary btn-large" data-action="regenerate">Paint It Again</button>
+                <button type="button" class="btn btn-link span-2" data-action="reset">Make another portrait</button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>© 2026 Pooja &amp; Amit Wedding. Designed with love.</p>
+    </footer>
+</body>
+</html>

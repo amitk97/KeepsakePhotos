@@ -1,0 +1,127 @@
+// Lays out the final 1200×1800 (4×6 print ratio) keepsake on a canvas.
+
+import { THEME, WEDDING } from "../config.js";
+import { clampLines, fitText, wrapText } from "./text.js";
+import { drawDoubleBorder, drawImageCover, drawSpeechBubble, roundRectPath } from "./shapes.js";
+
+export const CANVAS_WIDTH = 1200;
+export const CANVAS_HEIGHT = 1800;
+
+const FONTS = {
+  title: 'bold 54px "Cormorant Garamond", Georgia, serif',
+  venue: '600 20px "Plus Jakarta Sans", system-ui, sans-serif',
+  message: 'italic 34px "Cormorant Garamond", Georgia, serif',
+  name: 'bold 42px "Cormorant Garamond", Georgia, serif',
+  footer: '600 18px "Plus Jakarta Sans", system-ui, sans-serif',
+};
+
+export async function waitForFonts() {
+  try {
+    await Promise.all(Object.values(FONTS).map((f) => document.fonts.load(f)));
+    await document.fonts.ready;
+  } catch {
+    // fall back to system fonts
+  }
+}
+
+function drawBackground(ctx, w, h) {
+  ctx.fillStyle = THEME.ivory;
+  ctx.fillRect(0, 0, w, h);
+  const grad = ctx.createRadialGradient(w / 2, h / 2, 200, w / 2, h / 2, 900);
+  grad.addColorStop(0, "#FFFFFF");
+  grad.addColorStop(1, THEME.parchment);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+}
+
+function drawHeader(ctx, w) {
+  ctx.textAlign = "center";
+  ctx.fillStyle = THEME.green;
+  ctx.font = FONTS.title;
+  ctx.fillText(WEDDING.coupleNames, w / 2, 120);
+
+  ctx.fillStyle = THEME.gold;
+  ctx.font = FONTS.venue;
+  ctx.fillText(WEDDING.venueLine, w / 2, 155);
+
+  ctx.strokeStyle = THEME.gold;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(w / 2 - 120, 175);
+  ctx.lineTo(w / 2 + 120, 175);
+  ctx.stroke();
+}
+
+function drawMessage(ctx, w, message) {
+  const box = { x: 140, y: 210, w: w - 280, h: 170 };
+  drawSpeechBubble(ctx, { ...box, fill: "#FFFFFF", stroke: THEME.gold });
+
+  ctx.fillStyle = THEME.green;
+  ctx.font = FONTS.message;
+  ctx.textAlign = "center";
+  const maxWidth = box.w - 60;
+  const lines = clampLines(ctx, wrapText(ctx, `“${message}”`, maxWidth), 3, maxWidth);
+  const lineHeight = 42;
+  const startY = box.y + box.h / 2 - ((lines.length - 1) * lineHeight) / 2 + 10;
+  lines.forEach((line, i) => ctx.fillText(line, w / 2, startY + i * lineHeight));
+}
+
+// Returns where the frame ends so the footer can sit beneath it.
+function drawPortraitFrame(ctx, w, img) {
+  const pad = 12;
+  const frameW = 840;
+  const innerW = frameW - pad * 2;
+  const innerH = Math.round((innerW * 4) / 3); // 3:4 to match the generated art
+  const frameH = innerH + pad * 2;
+  const x = (w - frameW) / 2;
+  const y = 430;
+
+  ctx.save();
+  ctx.fillStyle = "#FFFFFF";
+  ctx.shadowColor = "rgba(29, 59, 45, 0.1)";
+  ctx.shadowBlur = 20;
+  ctx.shadowOffsetY = 10;
+  roundRectPath(ctx, x, y, frameW, frameH, 24);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.strokeStyle = THEME.gold;
+  ctx.lineWidth = 3;
+  roundRectPath(ctx, x, y, frameW, frameH, 24);
+  ctx.stroke();
+
+  ctx.save();
+  roundRectPath(ctx, x + pad, y + pad, innerW, innerH, 16);
+  ctx.clip();
+  drawImageCover(ctx, img, x + pad, y + pad, innerW, innerH);
+  ctx.restore();
+
+  return y + frameH;
+}
+
+function drawFooter(ctx, w, top, guestName) {
+  ctx.textAlign = "center";
+  ctx.fillStyle = THEME.green;
+  ctx.font = FONTS.name;
+  ctx.fillText(fitText(ctx, `Illustrated for ${guestName}`, w - 240), w / 2, top + 75);
+
+  ctx.fillStyle = THEME.gold;
+  ctx.font = FONTS.footer;
+  ctx.fillText(WEDDING.footerLine, w / 2, top + 117);
+}
+
+export function composePortrait(canvas, { image, guestName, message }) {
+  canvas.width = CANVAS_WIDTH;
+  canvas.height = CANVAS_HEIGHT;
+  const ctx = canvas.getContext("2d");
+  const w = CANVAS_WIDTH;
+  const h = CANVAS_HEIGHT;
+
+  ctx.clearRect(0, 0, w, h);
+  drawBackground(ctx, w, h);
+  drawDoubleBorder(ctx, w, h, { outer: THEME.gold, inner: THEME.green });
+  drawHeader(ctx, w);
+  drawMessage(ctx, w, message);
+  const frameBottom = drawPortraitFrame(ctx, w, image);
+  drawFooter(ctx, w, frameBottom, guestName);
+}
