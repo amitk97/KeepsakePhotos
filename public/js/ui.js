@@ -1,5 +1,7 @@
 // DOM helpers: steps, errors, photo preview, progress text.
 
+import { t } from "./i18n/index.js";
+
 export const $ = (id) => document.getElementById(id);
 
 const STEPS = ["step1", "step2", "step3", "step4"];
@@ -71,12 +73,6 @@ export function startProgress(messages, intervalMs) {
   return () => clearInterval(timer);
 }
 
-function ordinal(n) {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
-
 // Shows "You're 3rd in line, about 1 minute" while waiting; hides it once painting starts.
 export function showQueuePosition(position, secondsEach) {
   const el = $("queueStatus");
@@ -85,7 +81,7 @@ export function showQueuePosition(position, secondsEach) {
     return;
   }
   const mins = Math.max(1, Math.round((position * secondsEach) / 60));
-  el.textContent = `You're ${ordinal(position)} in line, about ${mins} minute${mins === 1 ? "" : "s"}.`;
+  el.textContent = t("queue", position, mins);
   el.classList.remove("hidden");
 }
 

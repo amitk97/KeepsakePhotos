@@ -57,7 +57,7 @@ export function captureFrame() {
   const video = $("cameraVideo");
   const vw = video.videoWidth;
   const vh = video.videoHeight;
-  if (!vw || !vh) throw new Error("Camera isn't ready yet. Please try again.");
+  if (!vw || !vh) throw Object.assign(new Error("Camera not ready"), { code: "errCameraNotReady" });
 
   let sw = vw;
   let sh = vh;

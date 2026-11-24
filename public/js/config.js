@@ -1,17 +1,17 @@
 // Wedding details and app settings. Edit these to reuse the app for another event.
+// Words guests read (messages, buttons) live in js/i18n/strings.js, in all three languages.
 
 export const WEDDING = {
   coupleNames: "Pooja & Amit",
   venueLine: "SOMERSET ESTATE  •  APRIL 2028", // placeholder until the date is set
   footerLine: "WITH LOVE & CELEBRATION  •  POOJA & AMIT",
-  defaultMessage: "Cheers to Pooja & Amit!",
-  presetMessages: [
-    "Cheers to Pooja & Amit! 🥂",
-    "Best night ever! ✨",
-    "To love & laughter! 💍",
-    "Dancing till midnight! 💃",
-  ],
   fileNamePrefix: "Pooja_Amit_Wedding_Keepsake",
+};
+
+// Your own artwork. Put the files in public/frames/ and set the paths here (see public/frames/README.md).
+export const DESIGN = {
+  frameOverlay: null, // e.g. "frames/frame.png": 1200×1800 PNG with a transparent window for the painting
+  monogram: null, // e.g. "frames/monogram.png": square PNG with a transparent background
 };
 
 export const THEME = {
@@ -30,13 +30,6 @@ export const SETTINGS = {
   maxFileBytes: 30 * 1024 * 1024,
   maxMessageLength: 60,
   heicConverterUrl: "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js",
-  progressMessages: [
-    "Studying your outfit…",
-    "Matching fabrics & colours…",
-    "Painting the watercolour…",
-    "Adding the finishing touches…",
-    "Warming up the studio, nearly there…",
-  ],
   progressIntervalMs: 7000,
   queuePollMs: 2500,
   secondsPerPortrait: 25, // rough wait per guest ahead in line

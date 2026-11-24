@@ -8,8 +8,8 @@
   --gold: #b89b62;
   --gold-soft: rgba(184, 155, 98, 0.4);
   --muted: rgba(29, 59, 45, 0.72);
-  --serif: "Cormorant Garamond", Georgia, serif;
-  --sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --serif: "Cormorant Garamond", "Noto Serif Gujarati", "Noto Serif Devanagari", Georgia, serif;
+  --sans: "Plus Jakarta Sans", "Noto Serif Gujarati", "Noto Serif Devanagari", system-ui, -apple-system, sans-serif;
   --radius: 16px;
 }
 
@@ -331,3 +331,49 @@ main { flex: 1; display: flex; flex-direction: column; justify-content: center; 
 @media (prefers-reduced-motion: reduce) {
   .glow, .pulse, .spinner { animation: none; }
 }
+
+/* ---------- Language switch ---------- */
+
+.lang-switch { display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; }
+.lang-switch button {
+  padding: 4px 12px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--gold-soft); background: var(--ivory); color: var(--green);
+  font: 500 13px var(--sans);
+}
+.lang-switch button[aria-pressed="true"] { background: var(--green); color: var(--ivory); border-color: var(--green); }
+
+/* ---------- Before / after slider ---------- */
+
+.compare-section > * + * { margin-top: 10px; }
+.compare {
+  --pos: 50%;
+  position: relative; aspect-ratio: 3 / 4; max-width: 20rem; margin-inline: auto;
+  border-radius: 12px; overflow: hidden; border: 2px solid var(--gold); background: #000;
+  touch-action: pan-y;
+}
+.compare-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.compare-after { position: absolute; inset: 0; clip-path: inset(0 0 0 var(--pos)); }
+.compare-handle {
+  position: absolute; top: 0; bottom: 0; left: var(--pos); width: 2px; margin-left: -1px;
+  background: var(--ivory); box-shadow: 0 0 6px rgba(0, 0, 0, 0.4); pointer-events: none;
+}
+.compare-handle span {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--ivory); color: var(--green); border: 2px solid var(--gold); font-size: 16px;
+}
+.compare-tag {
+  position: absolute; top: 10px; padding: 2px 8px; border-radius: 999px; pointer-events: none;
+  background: rgba(0, 0, 0, 0.5); color: #fff; font-size: 11px; font-weight: 600;
+}
+.compare-tag.left { left: 10px; }
+.compare-tag.right { right: 10px; }
+.compare input[type="range"] {
+  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0;
+  opacity: 0; cursor: ew-resize; -webkit-appearance: none; appearance: none;
+}
+
+/* ---------- Your own monogram ---------- */
+
+.monogram.has-image { background: none; border: none; }
+.monogram.has-image img { width: 100%; height: 100%; object-fit: contain; }
