@@ -145,6 +145,18 @@ def main():
             except Exception:
                 browser = p.chromium.launch()
 
+            # Fail on anything the Content-Security-Policy blocks, on every page.
+            csp_blocks = []
+            _new_context = browser.new_context
+
+            def watched_context(**kw):
+                ctx = _new_context(**kw)
+                ctx.on("console", lambda m: csp_blocks.append(m.text)
+                       if ("Content Security Policy" in m.text or "Refused to" in m.text) else None)
+                return ctx
+
+            browser.new_context = watched_context
+
             # ---- Phone: full guest journey ----
             phone = browser.new_context(
                 viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True,
@@ -422,6 +434,7 @@ def main():
                 sctx.close()
             finally:
                 flux_server.terminate()
+            assert not csp_blocks, "Content-Security-Policy blocked:\n  " + "\n  ".join(csp_blocks[:10])
             browser.close()
     except AssertionError as e:
         failures.append(str(e))

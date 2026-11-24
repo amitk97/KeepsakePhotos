@@ -13,6 +13,7 @@ import { createDailyCounter } from "./lib/usage.js";
 import { createLogbook } from "./lib/logbook.js";
 import { createSettingsStore, defaultSettings } from "./lib/settings.js";
 import { createSessions } from "./lib/session.js";
+import { createTickets } from "./lib/tickets.js";
 import { createDriveClient, createUploadQueue } from "./drive/client.js";
 import { createGenerateHandler, createQueueHandler } from "./routes/generate.js";
 import { createKeepsakeHandler } from "./routes/keepsake.js";
@@ -21,9 +22,30 @@ import { sendJson } from "./lib/http.js";
 
 const PUBLIC_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
 
+// Only this site, Google Fonts and the HEIC converter may supply code, styles and fonts;
+// nothing may embed the site in a frame (stops click-tricks).
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' https://cdn.jsdelivr.net",
+  "style-src 'self' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob:",
+  "media-src 'self' blob:",
+  "connect-src 'self'",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join("; ");
+
 const SECURITY_HEADERS = {
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "same-origin",
+  "Content-Security-Policy": CSP,
+  "X-Frame-Options": "DENY",
+  "Cross-Origin-Opener-Policy": "same-origin",
   // Lets the page use the camera on this site only.
   "Permissions-Policy": "camera=(self), microphone=(), geolocation=()",
 };
@@ -68,15 +90,18 @@ export function createApp(config, { provider, gemini, fetchImpl, drive: driveDep
   });
 
   const rateLimiter = createRateLimiter({ limit: config.rateLimitPerHour });
-  const keepsakeLimiter = createRateLimiter({ limit: 60 });
+  const ipLimiter = createRateLimiter({ limit: config.rateLimitPerIpHour });
+  const tickets = createTickets();
+  const keepsakeLimiter = createRateLimiter({ limit: 30 });
+  const keepsakeIpLimiter = createRateLimiter({ limit: 1000 });
   const loginLimiter = createRateLimiter({ limit: 10, windowMs: 15 * 60_000 });
-  const queue = createQueue({ maxConcurrent: config.maxConcurrent });
+  const queue = createQueue({ maxConcurrent: config.maxConcurrent, maxWaiting: config.maxWaiting });
   const portraitsToday = createDailyCounter();
   const sessions = createSessions({ password: config.adminPassword });
 
-  const handleGenerate = createGenerateHandler({ config, provider: imageProvider, rateLimiter, queue, portraitsToday, settings, upscaler, logger });
+  const handleGenerate = createGenerateHandler({ config, provider: imageProvider, rateLimiter, ipLimiter, queue, portraitsToday, settings, tickets, upscaler, logger });
   const handleQueue = createQueueHandler({ queue });
-  const handleKeepsake = createKeepsakeHandler({ config, uploads, rateLimiter: keepsakeLimiter, logger });
+  const handleKeepsake = createKeepsakeHandler({ config, uploads, rateLimiter: keepsakeLimiter, ipLimiter: keepsakeIpLimiter, tickets, logger });
   const handleAdmin = createAdminHandler({
     config, sessions, settings, provider: imageProvider, queue, portraitsToday, drive, uploads, upscaler, logbook: logger, loginLimiter,
   });

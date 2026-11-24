@@ -117,18 +117,21 @@ async function generate() {
   try {
     let image;
     let artUrl;
+    let ticket = null;
     let quick = false;
     try {
-      const { image: url } = await requestCaricature({
+      const { image: url, keepsakeTicket } = await requestCaricature({
         photoBase64: state.photoBase64,
         smallPhotoBase64: state.smallPhotoBase64,
         requestId,
       });
       image = await loadImage(url);
       artUrl = url;
+      ticket = keepsakeTicket || null;
     } catch (err) {
       if (!err.useFilter) throw err;
       console.warn("Using on-phone watercolour:", err.message);
+      ticket = err.keepsakeTicket || null;
       image = await paintOnPhone();
       artUrl = image.toDataURL("image/jpeg", 0.9);
       quick = true;
@@ -139,7 +142,7 @@ async function generate() {
     composePortrait($("portraitCanvas"), { image, guestName: state.guestName, message: state.guestMessage, nameLine, frame, monogram });
     $("portraitCanvas").setAttribute("aria-label", t("keepsakeAlt", state.guestName, state.guestMessage));
     showCompare(state.photoDataUrl, artUrl);
-    sendKeepsakeToHosts($("portraitCanvas"), state.guestName);
+    sendKeepsakeToHosts($("portraitCanvas"), state.guestName, ticket);
     ui.setQuickNote(quick);
     goToStep(4);
     $("shareBtn").classList.toggle("hidden", !(await canShareFiles($("portraitCanvas"), state.guestName)));

@@ -4,6 +4,8 @@ import QRCode, { QRErrorCorrectLevel } from "./qrcode.js";
 
 const $ = (id) => document.getElementById(id);
 
+const escapeXml = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
 // QR code as an SVG (sharp at any print size), with the standard quiet border.
 export function qrSvg(text) {
   const qr = new QRCode(-1, QRErrorCorrectLevel.M);
@@ -18,7 +20,7 @@ export function qrSvg(text) {
       if (qr.isDark(r, c)) path += `M${c + quiet} ${r + quiet}h1v1h-1z`;
     }
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges" role="img" aria-label="QR code for ${text}"><rect width="${size}" height="${size}" fill="#fff"/><path d="${path}" fill="#1D3B2D"/></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges" role="img" aria-label="QR code for ${escapeXml(text)}"><rect width="${size}" height="${size}" fill="#fff"/><path d="${path}" fill="#1D3B2D"/></svg>`;
 }
 
 function render() {

@@ -34,7 +34,9 @@ All in environment variables (Render → Environment, or `.env` locally). See `.
 | `UPSCALE_ENDPOINT_URL` | Optional upscaler for sharper prints |
 | `IMAGE_PROVIDERS` | Engine order, e.g. `cloudflare,flux` (default: every engine with credentials, free first) |
 | `ADMIN_PASSWORD` | Turns on `/admin` |
-| `STUDIO_OPEN`, `DAILY_PORTRAIT_CAP`, `MAX_CONCURRENT`, `RATE_LIMIT_PER_HOUR` | Limits (also changeable on the admin page) |
+| `STUDIO_OPEN`, `DAILY_PORTRAIT_CAP` | Studio switch and daily cap (also on the admin page) |
+| `MAX_CONCURRENT`, `MAX_WAITING` | Painted at once; most in line before guests get the on-phone watercolour |
+| `RATE_LIMIT_PER_HOUR`, `RATE_LIMIT_PER_IP_HOUR` | Per phone, and per internet address (generous, as venue Wi-Fi shares one) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `GOOGLE_DRIVE_FOLDER_ID` | Drive uploads, off until all four are set |
 | `GEMINI_API_KEY` | Optional paid backup (add `gemini` to `IMAGE_PROVIDERS`) |
 | `TRUST_PROXY=true` | On Render/Railway/Fly, so limits see guests' real addresses |
@@ -94,12 +96,12 @@ test/
 ## Testing
 
 ```bash
-npm test                         # 74 website tests, no keys needed
+npm test                         # 83 website tests, no keys needed
 python -m pytest flux-service    # 11 AI service tests
 python3 test/e2e/run_e2e.py      # whole guest journey in Chrome with fake AI engines (needs Playwright, Pillow, OpenCV)
 ```
 
-The browser test covers the phone camera opening on the first tap, both AI engines and the fallback to the on-phone watercolour, languages, the slider, offline use, the admin page and style lab, the QR sign (decoded), and an accessibility audit of every page.
+The browser test covers the phone camera opening on the first tap, both AI engines and the fallback to the on-phone watercolour, languages, the slider, offline use, the admin page and style lab, the QR sign (decoded), an accessibility audit of every page, and checks nothing is blocked by the security policy.
 
 ## Before the wedding
 

@@ -3,6 +3,7 @@
 
 import { WEDDING } from "./config.js";
 import { setOverrides } from "./i18n/index.js";
+import { deviceId } from "./api.js";
 
 let uploadsEnabled = false;
 
@@ -32,13 +33,14 @@ export async function loadSiteSettings() {
 }
 
 // Sends the finished keepsake to the hosts' shared folder. Does nothing until Google Drive is connected.
-export async function sendKeepsakeToHosts(canvas, guestName) {
-  if (!uploadsEnabled) return;
+// ticket: the one-time keepsakeTicket the server sent with the portrait (or with the "use the phone" reply).
+export async function sendKeepsakeToHosts(canvas, guestName, ticket) {
+  if (!uploadsEnabled || !ticket) return;
   try {
     await fetch("/api/keepsake", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: canvas.toDataURL("image/png"), guestName }),
+      headers: { "Content-Type": "application/json", "X-Device-Id": deviceId() },
+      body: JSON.stringify({ image: canvas.toDataURL("image/png"), guestName, ticket }),
       keepalive: false,
     });
   } catch {

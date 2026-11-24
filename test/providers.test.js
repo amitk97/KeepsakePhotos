@@ -212,7 +212,10 @@ describe("through the website server", () => {
     await withServer(createApp(base, { fetchImpl: f, logger: quiet }), async (url) => {
       const res = await post(url, { image: PHOTO, smallImage: SMALL });
       assert.equal(res.status, 503);
-      assert.deepEqual(await res.json(), { fallback: "filter", reason: "unavailable", error: "Our AI artists are resting." });
+      const body = await res.json();
+      assert.equal(body.fallback, "filter");
+      assert.equal(body.reason, "unavailable");
+      assert.match(body.keepsakeTicket, /^\d+\.[\w-]+\.[\w-]+$/);
     });
   });
 

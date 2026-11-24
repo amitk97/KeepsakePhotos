@@ -14,6 +14,21 @@ function fail(message, { useFilter = false, status = 0, code = "errGeneric" } = 
 
 const GUEST_ERRORS = { 400: "errUnreadable", 403: "errGeneric", 413: "errTooLarge", 429: "errRateLimit" };
 
+// A random id this phone keeps, so guests sharing the venue Wi-Fi each get their own portrait limit.
+export function deviceId() {
+  const KEY = "pa_device";
+  try {
+    let id = localStorage.getItem(KEY);
+    if (!id || !/^[A-Za-z0-9-]{16,64}$/.test(id)) {
+      id = newRequestId();
+      localStorage.setItem(KEY, id);
+    }
+    return id;
+  } catch {
+    return "";
+  }
+}
+
 export function newRequestId() {
   return crypto.randomUUID ? crypto.randomUUID() : `r-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -25,7 +40,7 @@ export async function requestCaricature({ photoBase64, smallPhotoBase64, request
   try {
     const res = await fetch(SETTINGS.apiEndpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Request-Id": requestId },
+      headers: { "Content-Type": "application/json", "X-Request-Id": requestId, "X-Device-Id": deviceId() },
       body: JSON.stringify({ image: photoBase64, smallImage: smallPhotoBase64, mimeType: "image/jpeg" }),
       signal: controller.signal,
     });
@@ -34,7 +49,9 @@ export async function requestCaricature({ photoBase64, smallPhotoBase64, request
 
     // Guest mistakes (bad photo, too many portraits) are shown on the form, not painted around.
     const code = GUEST_ERRORS[res.status];
-    throw fail(data.error || "The art studio didn't return a portrait.", { useFilter: !code, status: res.status, code });
+    const err = fail(data.error || "The art studio didn't return a portrait.", { useFilter: !code, status: res.status, code });
+    err.keepsakeTicket = data.keepsakeTicket || null;
+    throw err;
   } catch (err) {
     if (err.name === "AbortError") throw fail("This is taking too long.", { useFilter: true });
     if (err instanceof TypeError) throw fail("No connection to the art studio.", { useFilter: true });
