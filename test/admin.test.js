@@ -6,8 +6,8 @@ import os from "node:os";
 import path from "node:path";
 import { createApp } from "../server/app.js";
 import { loadConfig } from "../server/config.js";
-import { cleanPatch } from "../server/lib/settings.js";
-import { createDriveClient, createUploadQueue } from "../server/drive/client.js";
+import { cleanPatch } from "../server/storage/settings.js";
+import { createDriveClient, createUploadQueue } from "../server/storage/drive.js";
 import { keepsakeFileName } from "../server/routes/keepsake.js";
 
 const quiet = { log() {}, warn() {}, error() {} };
@@ -178,7 +178,10 @@ describe("keepsake uploads", () => {
     await withServer(app, async (call) => {
       assert.equal((await call("/api/settings")).data.uploadsEnabled, true);
       assert.equal((await call("/api/keepsake", { image: "not an image" })).status, 400);
-      assert.equal((await call("/api/keepsake", { image: PNG, guestName: "Maya / Arjun" })).status, 202);
+      assert.equal((await call("/api/keepsake", { image: PNG, guestName: "No ticket" })).status, 403);
+      const { keepsakeTicket } = (await call("/api/generate", { image: PHOTO })).data;
+      assert.equal((await call("/api/keepsake", { image: PNG, guestName: "Maya / Arjun", ticket: keepsakeTicket })).status, 202);
+      assert.equal((await call("/api/keepsake", { image: PNG, guestName: "Again", ticket: keepsakeTicket })).status, 403);
       while (!app.uploads.idle()) await new Promise((r) => setTimeout(r, 5));
     });
     assert.equal(uploaded.length, 1);

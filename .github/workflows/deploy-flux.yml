@@ -44,7 +44,7 @@ jobs:
         if: steps.keys.outputs.ready == 'true'
         with:
           python-version: "3.12"
-      - run: pip install modal
+      - run: pip install modal fastapi
         if: steps.keys.outputs.ready == 'true'
       - name: Deploy
         if: steps.keys.outputs.ready == 'true'

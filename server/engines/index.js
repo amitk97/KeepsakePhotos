@@ -3,7 +3,7 @@
 
 import { createCloudflareProvider } from "./cloudflare.js";
 import { createFluxProvider } from "./flux.js";
-import { createGeminiProvider } from "./gemini.js";
+import { createGeminiProvider } from "./gemini/index.js";
 import { createChain } from "./chain.js";
 
 export const PROVIDER_NAMES = ["cloudflare", "flux", "gemini"];

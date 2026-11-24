@@ -145,6 +145,18 @@ def main():
             except Exception:
                 browser = p.chromium.launch()
 
+            # Fail on anything the Content-Security-Policy blocks, on every page.
+            csp_blocks = []
+            _new_context = browser.new_context
+
+            def watched_context(**kw):
+                ctx = _new_context(**kw)
+                ctx.on("console", lambda m: csp_blocks.append(m.text)
+                       if ("Content Security Policy" in m.text or "Refused to" in m.text) else None)
+                return ctx
+
+            browser.new_context = watched_context
+
             # ---- Phone: full guest journey ----
             phone = browser.new_context(
                 viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True,
@@ -413,15 +425,21 @@ def main():
                 expect(sp.locator(".qr svg")).to_have_count(1)
                 audit(sp, "QR sign")
                 sp.screenshot(path=OUT / "9-sign.png", full_page=True)
-                qr_png = sp.locator(".qr").first.screenshot()
+                sp.evaluate("document.fonts.ready")
+                sp.wait_for_timeout(300)  # let the layout settle after fonts load
                 import numpy as np, cv2
-                decoded = cv2.QRCodeDetector().detectAndDecode(cv2.imdecode(np.frombuffer(qr_png, np.uint8), cv2.IMREAD_GRAYSCALE))[0]
+                gray = cv2.imdecode(np.frombuffer(sp.locator(".qr").first.screenshot(), np.uint8), cv2.IMREAD_GRAYSCALE)
+                decoded = ""
+                for det in (cv2.QRCodeDetector(), cv2.QRCodeDetectorAruco()):
+                    for scale in (1, 2):
+                        decoded = decoded or det.detectAndDecode(cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST))[0]
                 assert decoded == f"{site}/", f"QR decoded to {decoded!r}"
                 sp.select_option("#size", "card")
                 expect(sp.locator(".qr svg")).to_have_count(4)
                 sctx.close()
             finally:
                 flux_server.terminate()
+            assert not csp_blocks, "Content-Security-Policy blocked:\n  " + "\n  ".join(csp_blocks[:10])
             browser.close()
     except AssertionError as e:
         failures.append(str(e))

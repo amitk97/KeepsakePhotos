@@ -1,14 +1,15 @@
 // POST /api/generate
 //   headers: X-Request-Id (optional, lets the guest poll their place in line)
 //   body:    { image: <base64 JPEG ≤1536px>, smallImage?: <base64 JPEG <512px>, mimeType }
-// 200 → { image: "data:image/png;base64,...", engine }
+// 200 → { image: "data:image/png;base64,...", engine, keepsakeTicket }
 // 503 + { fallback: "filter" } → no AI engine available: the phone paints a free watercolour itself.
 
 import { randomUUID } from "node:crypto";
-import { HttpError, clientIp, readJsonBody, sendJson } from "../lib/http.js";
-import { NoImageError } from "../providers/errors.js";
-import { AllEnginesUnavailableError } from "../providers/chain.js";
-import { styleById } from "../prompts/watercolour.js";
+import { HttpError, clientIp, deviceId, readJsonBody, sendJson } from "../lib/http.js";
+import { CancelledError, QueueFullError } from "../lib/queue.js";
+import { NoImageError } from "../engines/errors.js";
+import { AllEnginesUnavailableError } from "../engines/chain.js";
+import { styleById } from "../engines/styles.js";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
@@ -16,10 +17,18 @@ const ID_RE = /^[A-Za-z0-9-]{8,64}$/;
 const SMALL_MAX = 1_000_000;
 
 // settings: the admin-page settings store (studio open, daily cap). Falls back to config.
-export function createGenerateHandler({ config, provider, rateLimiter, queue, portraitsToday, settings, upscaler = null, logger = console }) {
+// rateLimiter: per phone (falls back to address). ipLimiter: per internet address, generous, because
+// a whole venue on one Wi-Fi shares an address. tickets: one-time keepsake upload tickets.
+export function createGenerateHandler({ config, provider, rateLimiter, ipLimiter, queue, portraitsToday, settings, tickets, upscaler = null, logger = console }) {
   const current = () => (settings ? settings.get() : config);
+  // The phone paints the watercolour itself; the ticket still lets that keepsake reach the hosts' Drive.
   const useFilter = (res, reason, error) =>
-    sendJson(res, 503, { fallback: "filter", reason, error: error || "Our AI artists are resting." });
+    sendJson(res, 503, {
+      fallback: "filter",
+      reason,
+      error: error || "Our AI artists are resting.",
+      keepsakeTicket: tickets ? tickets.issue() : undefined,
+    });
 
   return async function handleGenerate(req, res) {
     if (config.allowedOrigin && req.headers.origin && req.headers.origin !== config.allowedOrigin) {
@@ -55,8 +64,12 @@ export function createGenerateHandler({ config, provider, rateLimiter, queue, po
     if (portraitsToday.get() >= dailyPortraitCap) return useFilter(res, "daily-cap");
 
     const ip = clientIp(req, config.trustProxy);
-    const slot = rateLimiter.take(ip);
+    const guestKey = deviceId(req) || `ip:${ip}`;
+    // Whole address over its (high) limit: give the free on-phone watercolour rather than block anyone.
+    if (ipLimiter && !ipLimiter.take(ip).allowed) return useFilter(res, "busy");
+    const slot = rateLimiter.take(guestKey);
     if (!slot.allowed) {
+      ipLimiter?.refund(ip);
       return sendJson(
         res,
         429,
@@ -67,30 +80,45 @@ export function createGenerateHandler({ config, provider, rateLimiter, queue, po
 
     const headerId = String(req.headers["x-request-id"] || "");
     const id = ID_RE.test(headerId) ? headerId : randomUUID();
+    const refund = () => {
+      rateLimiter.refund(guestKey);
+      ipLimiter?.refund(ip);
+    };
+
+    // If the guest gives up (phone times out or the page closes) before their turn, skip the painting.
+    let guestLeft = false;
+    res.on("close", () => {
+      if (!res.writableEnded) guestLeft = true;
+    });
 
     try {
       const prompt = styleVariant ? styleById(styleVariant).prompt : undefined;
-      let result = await queue.run(id, () =>
-        provider.createCaricature({ imageBase64: image, smallImageBase64: smallImage, mimeType, prompt })
+      let result = await queue.run(
+        id,
+        () => provider.createCaricature({ imageBase64: image, smallImageBase64: smallImage, mimeType, prompt }),
+        { isCancelled: () => guestLeft }
       );
       if (upscaler) result = await upscaler.maybeUpscale(result);
       portraitsToday.add(1);
-      return sendJson(res, 200, { image: `data:${result.mimeType};base64,${result.data}`, engine: result.engine });
+      return sendJson(res, 200, {
+        image: `data:${result.mimeType};base64,${result.data}`,
+        engine: result.engine,
+        keepsakeTicket: tickets ? tickets.issue() : undefined,
+      });
     } catch (err) {
+      refund(); // not the guest's fault
+      if (err instanceof CancelledError) {
+        logger.log("Guest left before their turn; skipped painting");
+        return;
+      }
+      if (err instanceof QueueFullError) {
+        logger.warn("Queue full: sending a guest the on-phone watercolour");
+        return useFilter(res, "busy");
+      }
       logger.error("Generation failed:", err.message);
-      rateLimiter.refund(ip); // not the guest's fault
       if (err instanceof NoImageError) return useFilter(res, "rejected", "The AI artist couldn't paint this photo.");
       if (err instanceof AllEnginesUnavailableError) return useFilter(res, "unavailable");
       return useFilter(res, "error");
     }
-  };
-}
-
-// GET /api/queue?id=…  → { position, active, waiting }   (position 0 = being painted now)
-export function createQueueHandler({ queue }) {
-  return function handleQueue(req, res) {
-    const id = new URL(req.url, "http://x").searchParams.get("id") || "";
-    const position = ID_RE.test(id) ? queue.position(id) : -1;
-    return sendJson(res, 200, { position, ...queue.stats() });
   };
 }

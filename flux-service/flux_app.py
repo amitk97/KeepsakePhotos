@@ -14,6 +14,9 @@ Endpoints (both: header  Authorization: Bearer <FLUX_API_TOKEN>):
   Caricaturist.generate  {"image": b64, "prompt"?: str, "guidance"?: 1-5, "seed"?: int}
                       -> {"image": b64 PNG, "mimeType": "image/png", "seconds": 18.2}
   Upscaler.upscale       {"image": b64}  -> {"image": b64 PNG (2x), "mimeType": "image/png", "seconds": 1.1}
+  settings               {"action": "get"} -> {"settings": {...} | null}
+                         {"action": "put", "settings": {...}} -> {"ok": true}
+                         (admin-page settings, kept permanently in a Modal Dict; tiny CPU, no GPU)
 """
 
 import os
@@ -22,7 +25,22 @@ import sys
 import modal
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from core import BadRequest, check_auth, decode_image, parse_paint_request  # noqa: E402
+
+# FastAPI exists inside the Modal containers. On the machine that runs `modal deploy` it may not,
+# and endpoint signatures need Header at import time, so fall back to a stand-in there.
+try:
+    from fastapi import Header, HTTPException
+except ImportError:  # deploy machine without fastapi
+
+    def Header(default=None, **_):  # noqa: N802
+        return default
+
+    class HTTPException(Exception):  # noqa: N818
+        def __init__(self, status_code, detail=""):
+            super().__init__(detail)
+            self.status_code = status_code
+
+from core import BadRequest, check_auth, decode_image, parse_paint_request, parse_settings_request  # noqa: E402
 
 MODEL_ID = "black-forest-labs/FLUX.1-Kontext-dev"
 CACHE_DIR = "/cache"
@@ -76,7 +94,6 @@ with flux_image.imports():
 
     import torch
     from diffusers import FluxKontextPipeline
-    from fastapi import Header, HTTPException
     from PIL import Image, ImageOps
 
 
@@ -162,7 +179,6 @@ with upscale_image.imports():
 
     import numpy as np
     import torch
-    from fastapi import Header, HTTPException
     from PIL import Image
     from spandrel import ModelLoader
 
@@ -204,6 +220,25 @@ class Upscaler:
             out = self.model(tensor).clamp(0, 1)
         arr = (out.squeeze(0).permute(1, 2, 0).cpu().numpy() * 255).round().astype("uint8")
         return {"image": _png_b64(Image.fromarray(arr)), "mimeType": "image/png", "seconds": round(time.time() - start, 1)}
+
+
+settings_image = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]").add_local_python_source("core")
+settings_dict = modal.Dict.from_name("keepsake-settings", create_if_missing=True)
+
+
+@app.function(image=settings_image, secrets=[auth_secret], timeout=30)
+@modal.fastapi_endpoint(method="POST")
+def settings(item: dict, authorization: str | None = Header(default=None)):
+    if not check_auth(authorization, os.environ.get("FLUX_API_TOKEN", "")):
+        raise HTTPException(status_code=401, detail="Unauthorised")
+    try:
+        action, value = parse_settings_request(item)
+    except BadRequest as err:
+        raise HTTPException(status_code=400, detail=str(err))
+    if action == "get":
+        return {"settings": settings_dict.get("settings", None)}
+    settings_dict["settings"] = value
+    return {"ok": True}
 
 
 @app.local_entrypoint()

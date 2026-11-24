@@ -94,6 +94,7 @@ export function createDriveClient({
 
     // Settings backup, so changes from the admin page survive a server restart.
     settingsBackup: {
+      name: "Google Drive",
       configured,
       async save(settings) {
         const id = await findSettingsFile();

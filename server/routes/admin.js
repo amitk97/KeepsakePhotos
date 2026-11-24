@@ -9,7 +9,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { clientIp, readJsonBody, sendJson } from "../lib/http.js";
-import { STYLE_VARIANTS, styleById } from "../prompts/watercolour.js";
+import { STYLE_VARIANTS, styleById } from "../engines/styles.js";
 
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
@@ -36,6 +36,7 @@ export function createAdminHandler({ config, sessions, settings, provider, queue
       engines: provider.status(),
       drive: { connected: Boolean(drive?.configured), ...(uploads ? uploads.stats() : {}) },
       settings: s,
+      settingsKeptIn: settings.backupNames ? settings.backupNames() : [],
       styles: STYLE_VARIANTS.map(({ id, name, description }) => ({ id, name, description })),
       upscaler: Boolean(upscaler?.configured),
       recentProblems: logbook.recent(),

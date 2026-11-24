@@ -2,7 +2,7 @@ import base64
 
 import pytest
 
-from core import DEFAULT_PROMPT, BadRequest, check_auth, decode_image, parse_paint_request, png_size
+from core import DEFAULT_PROMPT, BadRequest, check_auth, decode_image, parse_paint_request, parse_settings_request, png_size
 
 PNG_1x1 = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==")
 PHOTO = base64.b64encode(PNG_1x1 * 10).decode()
@@ -52,3 +52,11 @@ def test_default_prompt_is_watercolour_only():
 def test_png_size():
     assert png_size(PNG_1x1) == (1, 1)
     assert png_size(b"not a png") is None
+
+
+def test_settings_requests():
+    assert parse_settings_request({"action": "get"}) == ("get", None)
+    assert parse_settings_request({"action": "put", "settings": {"a": 1}}) == ("put", {"a": 1})
+    for bad in [None, {}, {"action": "delete"}, {"action": "put", "settings": []}, {"action": "put", "settings": {"x": "y" * 200_000}}]:
+        with pytest.raises(BadRequest):
+            parse_settings_request(bad)

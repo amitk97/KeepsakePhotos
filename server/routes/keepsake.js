@@ -1,8 +1,9 @@
-// POST /api/keepsake  { image: "data:image/png;base64,…", guestName }
+// POST /api/keepsake  { image: "data:image/png;base64,…", guestName, ticket }
+// ticket: the one-time keepsakeTicket from /api/generate, so only real portraits can be uploaded.
 // Queues the finished keepsake for upload to the shared Google Drive folder.
 // 204 when Drive isn't connected (nothing is sent anywhere), 202 when queued.
 
-import { clientIp, HttpError, readJsonBody, sendJson } from "../lib/http.js";
+import { clientIp, deviceId, HttpError, readJsonBody, sendJson } from "../lib/http.js";
 
 const DATA_URL_RE = /^data:(image\/(?:png|jpeg));base64,([A-Za-z0-9+/]+={0,2})$/;
 
@@ -28,7 +29,8 @@ export function keepsakeFileName(guestName, date = new Date()) {
   return `${stamp.year}-${stamp.month}-${stamp.day} ${stamp.hour}-${stamp.minute}-${stamp.second} ${name}.png`;
 }
 
-export function createKeepsakeHandler({ config, uploads, rateLimiter, logger = console }) {
+// rateLimiter: per phone; ipLimiter: per address (generous, for shared venue Wi-Fi).
+export function createKeepsakeHandler({ config, uploads, rateLimiter, ipLimiter, tickets, logger = console }) {
   return async function handleKeepsake(req, res) {
     if (!uploads) {
       res.writeHead(204).end();
@@ -38,7 +40,8 @@ export function createKeepsakeHandler({ config, uploads, rateLimiter, logger = c
     if (config.allowedOrigin && req.headers.origin && req.headers.origin !== config.allowedOrigin) {
       return sendJson(res, 403, { error: "Not allowed." });
     }
-    if (!rateLimiter.take(clientIp(req, config.trustProxy)).allowed) {
+    const ip = clientIp(req, config.trustProxy);
+    if ((ipLimiter && !ipLimiter.take(ip).allowed) || !rateLimiter.take(deviceId(req) || `ip:${ip}`).allowed) {
       return sendJson(res, 429, { error: "Too many uploads." });
     }
 
@@ -50,6 +53,7 @@ export function createKeepsakeHandler({ config, uploads, rateLimiter, logger = c
     }
     const match = typeof body.image === "string" && body.image.match(DATA_URL_RE);
     if (!match) return sendJson(res, 400, { error: "No keepsake received." });
+    if (tickets && !tickets.redeem(body.ticket)) return sendJson(res, 403, { error: "Not allowed." });
 
     uploads.add(keepsakeFileName(body.guestName), Buffer.from(match[2], "base64"), match[1]);
     logger.log(`Keepsake queued for Drive: ${body.guestName || "Guest"}`);

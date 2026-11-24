@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { wrapText, fitText, clampLines } from "../public/js/portrait/text.js";
-import { portraitFileName } from "../public/js/share.js";
+import { portraitFileName } from "../public/js/services/share.js";
 
 // Fake canvas context: every character is 10px wide.
 const ctx = { measureText: (s) => ({ width: Array.from(s).length * 10 }) };

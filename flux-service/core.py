@@ -71,6 +71,29 @@ def parse_paint_request(item):
     return image, prompt, guidance, seed
 
 
+MAX_SETTINGS_BYTES = 100_000
+
+
+def parse_settings_request(item):
+    """Settings store requests from the website: {"action": "get"} or {"action": "put", "settings": {...}}.
+    Returns (action, settings_or_None)."""
+    import json
+
+    if not isinstance(item, dict):
+        raise BadRequest("Send JSON")
+    action = item.get("action")
+    if action == "get":
+        return "get", None
+    if action == "put":
+        settings = item.get("settings")
+        if not isinstance(settings, dict):
+            raise BadRequest("Settings must be an object")
+        if len(json.dumps(settings)) > MAX_SETTINGS_BYTES:
+            raise BadRequest("Settings too large")
+        return "put", settings
+    raise BadRequest("Unknown action")
+
+
 def png_size(data):
     """(width, height) of PNG bytes, or None."""
     if len(data) >= 24 and data[:8] == b"\x89PNG\r\n\x1a\n":

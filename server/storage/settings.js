@@ -1,10 +1,10 @@
 // Settings the hosts can change from the admin page, without touching code.
-// Saved to a file on the server, and backed up to Google Drive once that is connected
-// (Render's free plan forgets files when the server restarts; Drive keeps them).
+// Saved to a file on the server and to every connected backup (Modal settings store, Google Drive),
+// because Render's free plan forgets files when the server restarts.
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { DEFAULT_STYLE, STYLE_VARIANTS } from "../prompts/watercolour.js";
+import { DEFAULT_STYLE, STYLE_VARIANTS } from "../engines/styles.js";
 
 export const LANG_CODES = ["en", "gu", "hi"];
 const TEXT_MAX = 80;
@@ -69,8 +69,10 @@ function merge(base, patch) {
   return next;
 }
 
-export function createSettingsStore({ defaults, file = "", backup = null, logger = console }) {
+// backups: objects with { name, configured, save(settings), load() }. Loaded in order; saved to all.
+export function createSettingsStore({ defaults, file = "", backups = [], logger = console }) {
   let current = structuredClone(defaults);
+  const active = () => backups.filter((b) => b?.configured);
 
   async function save() {
     if (file) {
@@ -81,13 +83,9 @@ export function createSettingsStore({ defaults, file = "", backup = null, logger
         logger.warn("Couldn't save settings file:", err.message);
       }
     }
-    if (backup?.configured) {
-      try {
-        await backup.save(current);
-      } catch (err) {
-        logger.warn("Couldn't back up settings to Google Drive:", err.message);
-      }
-    }
+    await Promise.all(
+      active().map((b) => b.save(current).catch((err) => logger.warn(`Couldn't back up settings to ${b.name}:`, err.message)))
+    );
   }
 
   return {
@@ -103,11 +101,12 @@ export function createSettingsStore({ defaults, file = "", backup = null, logger
           // no file yet
         }
       }
-      if (!saved && backup?.configured) {
+      for (const b of active()) {
+        if (saved) break;
         try {
-          saved = await backup.load();
+          saved = await b.load();
         } catch (err) {
-          logger.warn("Couldn't load settings from Google Drive:", err.message);
+          logger.warn(`Couldn't load settings from ${b.name}:`, err.message);
         }
       }
       if (saved) {
@@ -125,6 +124,9 @@ export function createSettingsStore({ defaults, file = "", backup = null, logger
       await save();
       return current;
     },
+
+    // Where settings are kept permanently (for the admin page).
+    backupNames: () => active().map((b) => b.name),
 
     // What guests' phones need (nothing private).
     publicView(extra = {}) {

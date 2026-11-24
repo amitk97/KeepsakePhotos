@@ -1,8 +1,8 @@
 // Gemini as a provider (optional backup, or main engine if you prefer it).
 
-import { createGeminiClient, GeminiError } from "../gemini/client.js";
-import { createCaricature, NoImageError as GeminiNoImage } from "../gemini/caricature.js";
-import { NoImageError, ProviderBusyError, ProviderError } from "./errors.js";
+import { createGeminiClient, GeminiError } from "./client.js";
+import { createCaricature, NoImageError as GeminiNoImage } from "./caricature.js";
+import { NoImageError, ProviderBusyError, ProviderError } from "../errors.js";
 
 export function createGeminiProvider({ apiKey, model, apiBase, timeoutMs, client, fetchImpl, logger = console }) {
   const gemini = client || createGeminiClient({ apiKey, model, apiBase, timeoutMs, ...(fetchImpl && { fetchImpl }) });

@@ -1,6 +1,6 @@
 // Camera: phones use the native camera app (most reliable); laptops get a live preview.
 
-import { $ } from "./ui.js";
+import { $ } from "../ui/dom.js";
 
 let stream = null;
 let facing = "user";

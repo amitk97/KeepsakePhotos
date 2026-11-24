@@ -24,6 +24,8 @@ services:
         value: "true"
       - key: UPSCALE_ENDPOINT_URL
         sync: false # optional: Modal upscale endpoint
+      - key: SETTINGS_ENDPOINT_URL
+        sync: false # Modal settings store: keeps admin-page changes permanently
       - key: ADMIN_PASSWORD
         sync: false # your admin page password (/admin)
       # Google Drive uploads: leave these unset until you connect Drive (SETUP.md)

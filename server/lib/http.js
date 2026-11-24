@@ -55,10 +55,25 @@ export function readJsonBody(req, maxBytes) {
   });
 }
 
+// Behind a host's proxy (TRUST_PROXY=true), the guest's address is the LAST entry of
+// X-Forwarded-For: that's the one the proxy added. Earlier entries come from the guest's own
+// request and can be forged, so they're never trusted.
 export function clientIp(req, trustProxy) {
   if (trustProxy) {
-    const forwarded = req.headers["x-forwarded-for"];
-    if (forwarded) return String(forwarded).split(",")[0].trim();
+    const forwarded = String(req.headers["x-forwarded-for"] || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (forwarded.length) return forwarded.at(-1);
   }
   return req.socket?.remoteAddress || "unknown";
+}
+
+const DEVICE_RE = /^[A-Za-z0-9-]{16,64}$/;
+
+// A random id each phone keeps (localStorage), so guests sharing the venue Wi-Fi
+// (one internet address) each get their own portrait limit.
+export function deviceId(req) {
+  const id = String(req.headers["x-device-id"] || "");
+  return DEVICE_RE.test(id) ? id : null;
 }

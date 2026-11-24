@@ -60,11 +60,15 @@ export function loadConfig(env = process.env) {
     dailyPortraitCap: int(env.DAILY_PORTRAIT_CAP, 600),
     // How many portraits are painted at the same time; the rest wait in line.
     maxConcurrent: int(env.MAX_CONCURRENT, 4),
+    // Most guests waiting in line; anyone beyond gets the on-phone watercolour straight away.
+    maxWaiting: int(env.MAX_WAITING, 30),
 
     // Admin page at /admin. Off unless a password is set.
     adminPassword: env.ADMIN_PASSWORD || "",
     // Where admin-page settings are saved. Empty = memory only.
     settingsFile: env.SETTINGS_FILE ?? "data/settings.json",
+    // Permanent settings store on Modal (flux-service `settings` endpoint). Optional.
+    settingsEndpointUrl: env.SETTINGS_ENDPOINT_URL || "",
 
     // Google Drive uploads of finished keepsakes. Off until all four are set (see SETUP.md).
     googleClientId: env.GOOGLE_CLIENT_ID || "",
@@ -75,7 +79,10 @@ export function loadConfig(env = process.env) {
 
     startedAt: new Date().toISOString(),
     allowedOrigin: env.ALLOWED_ORIGIN || "",
+    // Per phone, per hour.
     rateLimitPerHour: int(env.RATE_LIMIT_PER_HOUR, 15),
+    // Per internet address, per hour. Generous: everyone on the venue Wi-Fi shares one address.
+    rateLimitPerIpHour: int(env.RATE_LIMIT_PER_IP_HOUR, 400),
     maxBodyBytes: int(env.MAX_BODY_BYTES, 7 * 1024 * 1024),
     trustProxy: env.TRUST_PROXY === "true",
   };
