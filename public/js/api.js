@@ -3,12 +3,16 @@
 import { SETTINGS } from "./config.js";
 
 // error.useFilter = true means: no AI artist is free, paint the on-phone watercolour instead.
-function fail(message, { useFilter = false, status = 0 } = {}) {
+// error.code matches a key in i18n/strings.js, so the guest sees it in their language.
+function fail(message, { useFilter = false, status = 0, code = "errGeneric" } = {}) {
   const err = new Error(message);
   err.useFilter = useFilter;
   err.status = status;
+  err.code = code;
   return err;
 }
+
+const GUEST_ERRORS = { 400: "errUnreadable", 403: "errGeneric", 413: "errTooLarge", 429: "errRateLimit" };
 
 export function newRequestId() {
   return crypto.randomUUID ? crypto.randomUUID() : `r-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -29,8 +33,8 @@ export async function requestCaricature({ photoBase64, smallPhotoBase64, request
     if (res.ok && typeof data.image === "string") return data;
 
     // Guest mistakes (bad photo, too many portraits) are shown on the form, not painted around.
-    const guestProblem = res.status === 400 || res.status === 413 || res.status === 429 || res.status === 403;
-    throw fail(data.error || "The art studio didn't return a portrait.", { useFilter: !guestProblem, status: res.status });
+    const code = GUEST_ERRORS[res.status];
+    throw fail(data.error || "The art studio didn't return a portrait.", { useFilter: !code, status: res.status, code });
   } catch (err) {
     if (err.name === "AbortError") throw fail("This is taking too long.", { useFilter: true });
     if (err instanceof TypeError) throw fail("No connection to the art studio.", { useFilter: true });

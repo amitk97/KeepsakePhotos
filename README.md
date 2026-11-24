@@ -85,6 +85,11 @@ public/
   js/storage.js       keeps name & message if the page reloads
   js/ui.js, state.js
   js/sketch/          free on-phone watercolour (last-resort backup)
+  js/i18n/            English, Gujarati, Hindi: every word guests see (strings.js)
+  js/compare.js       before/after slider
+  js/design.js        loads your own frame and monogram (see frames/README.md)
+  frames/             frame template and spec for your own artwork
+  sw.js, manifest     offline support and "add to home screen"
   js/portrait/        canvas layout (compose.js), shapes, text wrapping
 test/
   *.test.js           unit + API tests (npm test)
@@ -94,7 +99,7 @@ test/
 ## Testing
 
 ```bash
-npm test                         # 44 server, engine-chain & layout tests, no keys needed
+npm test                         # 50 server, engine-chain, translation & layout tests, no keys needed
 python3 test/e2e/run_e2e.py      # full guest journey in Chrome (needs Playwright + Pillow)
 ```
 

@@ -148,6 +148,15 @@ def main():
             page.goto(base)
             page.screenshot(path=OUT / "1-welcome.png")
 
+            # Language switch: Gujarati, remembered after reload, then back to English
+            page.click("[data-lang=gu]")
+            expect(page.locator("#step1 h2")).to_have_text("તમારું વોટરકલર લગ્ન પોટ્રેટ બનાવો")
+            page.reload()
+            expect(page.locator("#step1 h2")).to_have_text("તમારું વોટરકલર લગ્ન પોટ્રેટ બનાવો")
+            assert page.get_attribute("html", "lang") == "gu"
+            page.screenshot(path=OUT / "1b-gujarati.png")
+            page.click("[data-lang=en]")
+            expect(page.locator("#step1 h2")).to_have_text("Create Your Watercolour Wedding Portrait")
             page.click("[data-action=begin]")
             expect(page.locator("#step2")).to_be_visible()
 
@@ -172,6 +181,14 @@ def main():
             expect(page.locator("#step3")).to_be_visible()
             expect(page.locator("#step4")).to_be_visible(timeout=20000)
             page.screenshot(path=OUT / "3-result.png", full_page=True)
+
+            # Before/after slider shows the photo and the painting, and moves
+            expect(page.locator("#compareSection")).to_be_visible()
+            assert page.get_attribute("#compareBefore", "src").startswith("data:image/jpeg")
+            assert page.get_attribute("#compareAfter", "src").startswith("data:image/")
+            page.locator("#compareRange").fill("20")
+            assert page.evaluate("getComputedStyle(document.getElementById('compare')).getPropertyValue('--pos').trim()") == "20%"
+            page.locator("#compareSection").screenshot(path=OUT / "3b-slider.png")
 
             # Photo was resized before upload, and the outfit notes reached the painting prompt.
             paint = [r for r in FakeGemini.requests if r["body"]["generationConfig"]["responseModalities"] == ["IMAGE"]][-1]
@@ -259,6 +276,7 @@ def main():
                 fp.goto(f"http://127.0.0.1:{flux_port}")
                 health = fp.evaluate("() => fetch('/api/health').then(r => r.json())")
                 assert [e["name"] for e in health["engines"]] == ["cloudflare", "flux"], health
+                fp.click("[data-lang=hi]")
                 fp.click("[data-action=begin]")
                 fp.set_input_files("#fileInput", str(photo))
                 expect(fp.locator("#submitBtn")).to_be_enabled()
@@ -271,8 +289,28 @@ def main():
                 assert max(cf_req["small"]) < 512, cf_req["small"]
                 assert "watercolour" in cf_req["prompt"].lower()
                 assert not [r for r in FakeGemini.requests if r["path"] == "/flux"], "FLUX used while Cloudflare was free"
-                fp.screenshot(path=OUT / "6-flux-result.png", full_page=True)
+                fp.screenshot(path=OUT / "6-hindi-result.png", full_page=True)
                 fctx.close()
+
+                # Offline: page still opens from the saved copy and paints the on-phone watercolour
+                octx = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
+                op = octx.new_page()
+                op.goto(f"http://127.0.0.1:{flux_port}")
+                op.wait_for_function("navigator.serviceWorker && navigator.serviceWorker.ready.then(() => true)")
+                op.reload()
+                op.wait_for_function("!!navigator.serviceWorker.controller")
+                octx.set_offline(True)
+                op.reload()
+                expect(op.locator("#step1 h2")).to_be_visible()
+                op.click("[data-action=begin]")
+                op.set_input_files("#fileInput", str(photo))
+                expect(op.locator("#submitBtn")).to_be_enabled()
+                op.fill("#guestName", "Offline Guest")
+                op.click("#submitBtn")
+                expect(op.locator("#step4")).to_be_visible(timeout=20000)
+                expect(op.locator("#quickNote")).to_be_visible()
+                op.screenshot(path=OUT / "7-offline.png", full_page=True)
+                octx.close()
             finally:
                 flux_server.terminate()
             browser.close()

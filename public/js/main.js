@@ -1,6 +1,9 @@
 // Wires the page together. Buttons declare what they do with data-action="...".
 
-import { SETTINGS, WEDDING } from "./config.js";
+import { SETTINGS } from "./config.js";
+import { applyTranslations, onLangChange, setLang, t } from "./i18n/index.js";
+import { hideCompare, initCompare, showCompare } from "./compare.js";
+import { getDesign, loadDesign } from "./design.js";
 import { state, clearPhoto } from "./state.js";
 import * as ui from "./ui.js";
 import { clearDraft, loadDraft, saveDraft } from "./storage.js";
@@ -38,7 +41,7 @@ function takePhoto() {
   camera.openLiveCamera().catch((err) => {
     console.warn("Live camera unavailable:", err);
     camera.closeLiveCamera();
-    ui.showError("We couldn't open your camera. Please allow camera access in your browser, or tap 'Choose Photo' to upload one.");
+    ui.showError(t("errCamera"));
   });
 }
 
@@ -49,7 +52,7 @@ function capturePhoto() {
     setPhoto(preparePhoto(frame));
   } catch (err) {
     camera.closeLiveCamera();
-    ui.showError(err.message);
+    ui.showError(t(err.code || "errGeneric"));
   }
 }
 
@@ -65,7 +68,7 @@ async function onFileChosen(event) {
     setPhoto(await processFile(file));
   } catch (err) {
     console.error(err);
-    ui.showError(err.message || "We couldn't read that photo. Please try a different one.");
+    ui.showError(t(err.code || "errUnreadable"));
   } finally {
     ui.setPhotoProcessing(false);
   }
@@ -79,11 +82,11 @@ async function onSubmit(event) {
 
   const name = $("guestName").value.trim();
   const message = $("guestMessage").value.trim();
-  if (!name) return ui.showError("Please enter your name.");
-  if (!state.photoBase64) return ui.showError("Please take or choose a photo first.");
+  if (!name) return ui.showError(t("errName"));
+  if (!state.photoBase64) return ui.showError(t("errPhoto"));
 
   state.guestName = name;
-  state.guestMessage = message || WEDDING.defaultMessage;
+  state.guestMessage = message || t("defaultMessage");
   await generate();
 }
 
@@ -98,7 +101,8 @@ async function generate() {
   state.busy = true;
   goToStep(3);
   ui.setQuickNote(false);
-  const stopProgress = ui.startProgress(SETTINGS.progressMessages, SETTINGS.progressIntervalMs);
+  hideCompare();
+  const stopProgress = ui.startProgress(t("progress"), SETTINGS.progressIntervalMs);
 
   const requestId = newRequestId();
   const poll = setInterval(async () => {
@@ -108,6 +112,7 @@ async function generate() {
 
   try {
     let image;
+    let artUrl;
     let quick = false;
     try {
       const { image: url } = await requestCaricature({
@@ -116,21 +121,26 @@ async function generate() {
         requestId,
       });
       image = await loadImage(url);
+      artUrl = url;
     } catch (err) {
       if (!err.useFilter) throw err;
       console.warn("Using on-phone watercolour:", err.message);
       image = await paintOnPhone();
+      artUrl = image.toDataURL("image/jpeg", 0.9);
       quick = true;
     }
-    await waitForFonts();
-    composePortrait($("portraitCanvas"), { image, guestName: state.guestName, message: state.guestMessage });
+    const nameLine = t("illustratedFor", state.guestName);
+    await waitForFonts(`${nameLine} ${state.guestMessage}`);
+    const { frame, monogram } = getDesign();
+    composePortrait($("portraitCanvas"), { image, guestName: state.guestName, message: state.guestMessage, nameLine, frame, monogram });
+    showCompare(state.photoDataUrl, artUrl);
     ui.setQuickNote(quick);
     goToStep(4);
     $("shareBtn").classList.toggle("hidden", !(await canShareFiles($("portraitCanvas"), state.guestName)));
   } catch (err) {
     console.error("Generation failed:", err);
     goToStep(2);
-    ui.showError(err.message || "Something went wrong painting your portrait. Please try again.");
+    ui.showError(t(err.code || "errGeneric"));
   } finally {
     clearInterval(poll);
     ui.showQueuePosition(-1);
@@ -146,6 +156,7 @@ function resetApp() {
   $("detailsForm").reset();
   ui.clearPhotoPreview();
   ui.hideError();
+  hideCompare();
   clearDraft();
   ui.updateCharCounter(SETTINGS.maxMessageLength);
   goToStep(1);
@@ -158,7 +169,8 @@ const actions = {
   "take-photo": takePhoto,
   "choose-photo": () => $("fileInput").click(),
   "close-camera": () => camera.closeLiveCamera(),
-  "flip-camera": () => camera.flipCamera().catch((e) => ui.showError(e.message)),
+  "flip-camera": () => camera.flipCamera().catch(() => ui.showError(t("errCamera"))),
+  lang: (el) => setLang(el.dataset.lang),
   capture: capturePhoto,
   share: () => sharePortrait($("portraitCanvas"), state.guestName),
   download: () => downloadPortrait($("portraitCanvas"), state.guestName),
@@ -173,7 +185,7 @@ function init() {
     const action = actions[el.dataset.action];
     if (action) {
       e.preventDefault();
-      action();
+      action(el);
     }
   });
 
@@ -190,11 +202,22 @@ function init() {
     saveDraft({ message: msgEl.value });
   });
 
-  ui.renderSuggestionChips(WEDDING.presetMessages, (msg) => {
-    msgEl.value = msg;
-    ui.updateCharCounter(SETTINGS.maxMessageLength);
-    saveDraft({ message: msg });
-  });
+  const renderChips = () =>
+    ui.renderSuggestionChips(t("presets"), (msg) => {
+      msgEl.value = msg;
+      ui.updateCharCounter(SETTINGS.maxMessageLength);
+      saveDraft({ message: msg });
+    });
+  renderChips();
+  onLangChange(renderChips);
+  applyTranslations();
+  initCompare();
+  loadDesign();
+
+  // Lets the page load (and paint the on-phone watercolour) even with no signal, and be added to the home screen.
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js").catch((err) => console.warn("Offline support unavailable:", err));
+  }
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") camera.closeLiveCamera();

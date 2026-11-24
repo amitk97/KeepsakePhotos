@@ -2,7 +2,13 @@
 
 import { SETTINGS } from "./config.js";
 
-export class PhotoError extends Error {}
+// code matches an error key in i18n/strings.js (errTooLarge, errNotImage, errUnreadable).
+export class PhotoError extends Error {
+  constructor(code, message = code) {
+    super(message);
+    this.code = code;
+  }
+}
 
 export function isHeic(file) {
   return /hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name || "");
@@ -10,10 +16,10 @@ export function isHeic(file) {
 
 export function validateFile(file) {
   if (file.size > SETTINGS.maxFileBytes) {
-    throw new PhotoError("That photo is over 30 MB. Please choose a smaller one.");
+    throw new PhotoError("errTooLarge");
   }
   if (!file.type.startsWith("image/") && !isHeic(file)) {
-    throw new PhotoError("Please choose a photo (JPG, PNG, WebP or HEIC).");
+    throw new PhotoError("errNotImage");
   }
 }
 
@@ -21,7 +27,7 @@ export function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new PhotoError("Couldn't load image."));
+    img.onerror = () => reject(new PhotoError("errUnreadable"));
     img.src = src;
   });
 }
@@ -41,7 +47,7 @@ function loadScript(src) {
     const s = document.createElement("script");
     s.src = src;
     s.onload = resolve;
-    s.onerror = () => reject(new PhotoError("Couldn't load the photo converter."));
+    s.onerror = () => reject(new PhotoError("errUnreadable"));
     document.head.appendChild(s);
   });
 }
@@ -62,7 +68,7 @@ async function decodeFile(file) {
 export function toResizedJpeg(source, maxEdge = SETTINGS.maxPhotoEdge, quality = SETTINGS.photoQuality) {
   const w = source.naturalWidth || source.width;
   const h = source.naturalHeight || source.height;
-  if (!w || !h) throw new PhotoError("That photo looks empty. Please try another.");
+  if (!w || !h) throw new PhotoError("errUnreadable");
 
   const scale = Math.min(1, maxEdge / Math.max(w, h));
   const canvas = document.createElement("canvas");
@@ -91,7 +97,7 @@ export async function processFile(file) {
   try {
     img = await decodeFile(file);
   } catch {
-    throw new PhotoError("We couldn't read that photo. Please try a different one.");
+    throw new PhotoError("errUnreadable");
   }
   return preparePhoto(img);
 }

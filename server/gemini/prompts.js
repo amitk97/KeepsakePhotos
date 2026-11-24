@@ -16,6 +16,7 @@ export function buildCaricaturePrompt(outfitNotes = "") {
     "Create a charming, flattering soft watercolour caricature painting of the person or people in the reference photo.",
 
     "LIKENESS: keep each person clearly recognisable: face shape, skin tone, hairstyle, facial hair, glasses and warm expression. " +
+      "If there are several people, include every one of them, each equally recognisable. " +
       "Caricature exaggeration applies ONLY to the head (slightly larger head, playful expression). Bodies keep natural proportions.",
 
     "OUTFIT IS THE MOST IMPORTANT REQUIREMENT. Reproduce every garment and accessory exactly as in the photo: " +

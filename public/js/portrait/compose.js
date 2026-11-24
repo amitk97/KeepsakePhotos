@@ -7,17 +7,26 @@ import { drawDoubleBorder, drawImageCover, drawSpeechBubble, roundRectPath } fro
 export const CANVAS_WIDTH = 1200;
 export const CANVAS_HEIGHT = 1800;
 
+// Noto Serif Gujarati / Devanagari draw the Gujarati and Hindi letters the Latin fonts lack.
+const SERIF = '"Cormorant Garamond", "Noto Serif Gujarati", "Noto Serif Devanagari", Georgia, serif';
+const SANS = '"Plus Jakarta Sans", "Noto Serif Gujarati", "Noto Serif Devanagari", system-ui, sans-serif';
+
 const FONTS = {
-  title: 'bold 54px "Cormorant Garamond", Georgia, serif',
-  venue: '600 20px "Plus Jakarta Sans", system-ui, sans-serif',
-  message: 'italic 34px "Cormorant Garamond", Georgia, serif',
-  name: 'bold 42px "Cormorant Garamond", Georgia, serif',
-  footer: '600 18px "Plus Jakarta Sans", system-ui, sans-serif',
+  title: `bold 54px ${SERIF}`,
+  venue: `600 20px ${SANS}`,
+  message: `italic 34px ${SERIF}`,
+  name: `bold 42px ${SERIF}`,
+  footer: `600 18px ${SANS}`,
 };
 
-export async function waitForFonts() {
+// The art window, so a custom frame designer knows where the painting sits (see public/frames/README.md).
+export const ART_WINDOW = { x: 192, y: 442, w: 816, h: 1088 };
+
+// Pass the guest's text so the right script fonts (Gujarati, Devanagari) are fetched before drawing.
+export async function waitForFonts(sampleText = "") {
   try {
-    await Promise.all(Object.values(FONTS).map((f) => document.fonts.load(f)));
+    const text = `Aa ${sampleText}`;
+    await Promise.all(Object.values(FONTS).map((f) => document.fonts.load(f, text)));
     await document.fonts.ready;
   } catch {
     // fall back to system fonts
@@ -99,18 +108,29 @@ function drawPortraitFrame(ctx, w, img) {
   return y + frameH;
 }
 
-function drawFooter(ctx, w, top, guestName) {
+function drawFooter(ctx, w, top, nameLine) {
   ctx.textAlign = "center";
   ctx.fillStyle = THEME.green;
   ctx.font = FONTS.name;
-  ctx.fillText(fitText(ctx, `Illustrated for ${guestName}`, w - 240), w / 2, top + 75);
+  ctx.fillText(fitText(ctx, nameLine, w - 240), w / 2, top + 75);
 
   ctx.fillStyle = THEME.gold;
   ctx.font = FONTS.footer;
   ctx.fillText(WEDDING.footerLine, w / 2, top + 117);
 }
 
-export function composePortrait(canvas, { image, guestName, message }) {
+// Small monogram centred under the footer text.
+function drawMonogram(ctx, w, top, monogram) {
+  const size = 56;
+  const iw = monogram.naturalWidth || monogram.width;
+  const ih = monogram.naturalHeight || monogram.height;
+  const scale = size / Math.max(iw, ih);
+  ctx.drawImage(monogram, w / 2 - (iw * scale) / 2, top + 136, iw * scale, ih * scale);
+}
+
+// image: the painting. nameLine: "Illustrated for …" in the guest's language.
+// frame / monogram: your own artwork (optional). A custom frame replaces the built-in border and is drawn on top.
+export function composePortrait(canvas, { image, guestName, message, nameLine, frame = null, monogram = null }) {
   canvas.width = CANVAS_WIDTH;
   canvas.height = CANVAS_HEIGHT;
   const ctx = canvas.getContext("2d");
@@ -119,9 +139,11 @@ export function composePortrait(canvas, { image, guestName, message }) {
 
   ctx.clearRect(0, 0, w, h);
   drawBackground(ctx, w, h);
-  drawDoubleBorder(ctx, w, h, { outer: THEME.gold, inner: THEME.green });
+  if (!frame) drawDoubleBorder(ctx, w, h, { outer: THEME.gold, inner: THEME.green });
   drawHeader(ctx, w);
   drawMessage(ctx, w, message);
   const frameBottom = drawPortraitFrame(ctx, w, image);
-  drawFooter(ctx, w, frameBottom, guestName);
+  drawFooter(ctx, w, frameBottom, nameLine || `Illustrated for ${guestName}`);
+  if (monogram) drawMonogram(ctx, w, frameBottom, monogram);
+  if (frame) ctx.drawImage(frame, 0, 0, w, h);
 }

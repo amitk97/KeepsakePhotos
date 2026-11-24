@@ -49,7 +49,8 @@ export function createStaticHandler(rootDir) {
       "Content-Type": MIME_TYPES[ext] || "application/octet-stream",
       "Content-Length": info.size,
       // HTML always fresh; JS/CSS short cache so updates reach guests quickly.
-      "Cache-Control": ext === ".html" ? "no-cache" : "public, max-age=300",
+      // HTML and the offline worker always fresh; everything else a short cache so updates reach guests quickly.
+      "Cache-Control": ext === ".html" || pathname === "/sw.js" ? "no-cache" : "public, max-age=300",
     });
     if (req.method === "HEAD") return res.end();
     createReadStream(filePath).pipe(res);

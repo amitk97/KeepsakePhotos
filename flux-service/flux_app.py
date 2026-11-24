@@ -36,6 +36,8 @@ PROMPT = (
     "Repaint this photo as a soft, charming watercolour caricature painting for a wedding keepsake. "
     "Keep every person recognisable with the same face, skin tone, hairstyle and expression, "
     "with a slightly enlarged head. "
+    "If there are several people, include every one of them, each equally recognisable, "
+    "arranged naturally to fit a portrait-shaped painting. "
     "Keep their outfits exactly the same: identical colours, fabrics, textures, sheen, patterns, "
     "embroidery, borders, drape, silhouette and jewellery, painted in delicate watercolour washes. "
     "Do not change, simplify or restyle the clothing. "
