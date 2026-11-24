@@ -99,6 +99,9 @@ export function showQueuePosition(position, secondsEach) {
   el.classList.remove("hidden");
 }
 
-export function setQuickNote(on) {
-  $("quickNote").classList.toggle("hidden", !on);
+// A line under the progress message, e.g. place in line or "Asking another artist".
+export function showStatus(text) {
+  const el = $("queueStatus");
+  el.textContent = text || "";
+  el.classList.toggle("hidden", !text);
 }

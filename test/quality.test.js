@@ -67,7 +67,7 @@ describe("watercolour styles", () => {
       assert.match(v.prompt, /outfits exactly the same/i);
       assert.match(v.prompt, /several people/i);
     }
-    assert.equal(styleById("nope").id, "classic");
+    assert.equal(styleById("nope").id, "caricature");
   });
 });
 
@@ -104,7 +104,7 @@ describe("styles and upscaling through the server", () => {
     await withServer(createApp(cfg, { provider: engine, fetchImpl, logger: quiet }), async (call) => {
       await call("/api/admin/login", { password: "pw" });
       const status = (await call("/api/admin/status")).data;
-      assert.equal(status.settings.styleVariant, "classic");
+      assert.equal(status.settings.styleVariant, "caricature");
       assert.equal(status.styles.length, STYLE_VARIANTS.length);
       assert.equal(status.upscaler, true);
 

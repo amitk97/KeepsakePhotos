@@ -107,7 +107,7 @@ describe("generate error handling", () => {
     const res = await post(url, { image: PHOTO });
     server.close();
     assert.equal(res.status, 503);
-    assert.equal((await res.json()).fallback, "filter");
+    assert.equal((await res.json()).fallback, "client");
   });
 
   test("returns 503 when Gemini is rate limited", async () => {

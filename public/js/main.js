@@ -52,5 +52,5 @@ loadSiteSettings().then(() => {
 
 // Offline support and "add to home screen".
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js").catch((err) => console.warn("Offline support unavailable:", err));
+  navigator.serviceWorker.register("sw.js").catch((err) => console.warn("Offline support unavailable:", err));
 }

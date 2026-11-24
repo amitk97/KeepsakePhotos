@@ -2,7 +2,7 @@
 
 import { SETTINGS } from "../config.js";
 
-// error.useFilter = true means: no AI artist is free, paint the on-phone watercolour instead.
+// error.useFilter = true means: the server has no artist free; try the free artists from the phone.
 // error.code matches a key in i18n/strings.js, so the guest sees it in their language.
 function fail(message, { useFilter = false, status = 0, code = "errGeneric" } = {}) {
   const err = new Error(message);
@@ -64,7 +64,7 @@ export async function requestCaricature({ photoBase64, smallPhotoBase64, request
 // { position: 0 = painting now, 1 = next, …, -1 = unknown }
 export async function fetchQueuePosition(requestId) {
   try {
-    const res = await fetch(`/api/queue?id=${encodeURIComponent(requestId)}`, { cache: "no-store" });
+    const res = await fetch(`api/queue?id=${encodeURIComponent(requestId)}`, { cache: "no-store" });
     return res.ok ? await res.json() : { position: -1 };
   } catch {
     return { position: -1 };

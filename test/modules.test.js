@@ -20,6 +20,9 @@ function walk(dir) {
 function exportsOf(file) {
   const src = readFileSync(file, "utf8");
   const names = new Set();
+  for (const m of src.matchAll(/export\s*\*\s*from\s*["'](\.[^"']+)["']/g)) {
+    for (const n of exportsOf(path.resolve(path.dirname(file), m[1]))) if (n !== "default") names.add(n);
+  }
   for (const m of src.matchAll(/export\s+(?:async\s+)?(?:function\*?|const|let|var|class)\s+([A-Za-z_$][\w$]*)/g)) names.add(m[1]);
   for (const m of src.matchAll(/export\s*\{([^}]+)\}/g)) {
     for (const part of m[1].split(",")) {

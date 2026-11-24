@@ -213,7 +213,7 @@ describe("through the website server", () => {
       const res = await post(url, { image: PHOTO, smallImage: SMALL });
       assert.equal(res.status, 503);
       const body = await res.json();
-      assert.equal(body.fallback, "filter");
+      assert.equal(body.fallback, "client");
       assert.equal(body.reason, "unavailable");
       assert.match(body.keepsakeTicket, /^\d+\.[\w-]+\.[\w-]+$/);
     });

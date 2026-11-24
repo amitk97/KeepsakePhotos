@@ -1,46 +1,48 @@
-// Offline support. Keeps a copy of the page so it opens even with no signal at the venue;
-// with no connection the guest still gets the free on-phone watercolour.
+// Offline support. Keeps a copy of the page so it opens even with a weak signal at the venue.
+// Paths are relative to this file, so it works at a site's root or in a sub-folder (GitHub Pages).
 // Pages and code: network first (updates arrive straight away), saved copy if offline.
 // Fonts are part of the saved copy. Portrait requests (/api/) are never cached.
 
-const CACHE = "keepsake-v5";
+const CACHE = "keepsake-v6";
 const SHELL = [
-  "/",
-  "/index.html",
-  "/css/styles.css",
-  "/css/fonts.css",
-  "/fonts/cormorant-garamond.woff",
-  "/fonts/cormorant-garamond-italic.woff",
-  "/fonts/plus-jakarta-sans.woff",
-  "/fonts/noto-serif-gujarati.woff",
-  "/fonts/noto-serif-devanagari.woff",
-  "/favicon.svg",
-  "/manifest.webmanifest",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/icons/apple-touch-icon.png",
-  "/js/main.js",
-  "/js/config.js",
-  "/js/state.js",
-  "/js/ui/dom.js",
-  "/js/services/drafts.js",
-  "/js/media/camera.js",
-  "/js/media/photo.js",
-  "/js/services/api.js",
-  "/js/services/share.js",
-  "/js/ui/compare.js",
-  "/js/ui/design.js",
-  "/js/services/siteSettings.js",
-  "/js/i18n/index.js",
-  "/js/i18n/strings.js",
-  "/js/portrait/compose.js",
-  "/js/portrait/shapes.js",
-  "/js/portrait/text.js",
-  "/js/fallback/watercolour.js",
-  "/js/flows/navigation.js",
-  "/js/flows/photoInput.js",
-  "/js/flows/portrait.js",
-  "/js/flows/form.js",
+  "./",
+  "./index.html",
+  "./css/styles.css",
+  "./css/fonts.css",
+  "./fonts/cormorant-garamond.woff",
+  "./fonts/cormorant-garamond-italic.woff",
+  "./fonts/plus-jakarta-sans.woff",
+  "./fonts/noto-serif-gujarati.woff",
+  "./fonts/noto-serif-devanagari.woff",
+  "./favicon.svg",
+  "./manifest.webmanifest",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./icons/apple-touch-icon.png",
+  "./js/ai/huggingFace.js",
+  "./js/ai/spaces.js",
+  "./js/ai/styles.js",
+  "./js/config.js",
+  "./js/flows/form.js",
+  "./js/flows/navigation.js",
+  "./js/flows/photoInput.js",
+  "./js/flows/portrait.js",
+  "./js/i18n/index.js",
+  "./js/i18n/strings.js",
+  "./js/main.js",
+  "./js/media/camera.js",
+  "./js/media/photo.js",
+  "./js/portrait/compose.js",
+  "./js/portrait/shapes.js",
+  "./js/portrait/text.js",
+  "./js/services/api.js",
+  "./js/services/drafts.js",
+  "./js/services/share.js",
+  "./js/services/siteSettings.js",
+  "./js/state.js",
+  "./js/ui/compare.js",
+  "./js/ui/design.js",
+  "./js/ui/dom.js",
 ];
 
 self.addEventListener("install", (event) => {
@@ -68,7 +70,7 @@ async function networkFirst(request) {
     if (response.ok) cache.put(request, response.clone());
     return response;
   } catch {
-    return (await cache.match(request, { ignoreSearch: true })) || (await cache.match("/")) || Response.error();
+    return (await cache.match(request, { ignoreSearch: true })) || (await cache.match("./")) || Response.error();
   }
 }
 
@@ -78,7 +80,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   if (url.origin === self.location.origin) {
-    if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/admin")) return;
+    if (url.pathname.includes("/api/") || url.pathname.includes("/admin")) return;
     event.respondWith(networkFirst(request));
   }
 });

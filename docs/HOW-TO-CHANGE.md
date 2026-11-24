@@ -20,7 +20,8 @@ Each recipe names the exact file. After any change: `npm run check && npm test`,
 | Fonts | `public/css/fonts.css` (files in `public/fonts/`) |
 | The keepsake layout (positions, sizes) | `public/js/portrait/compose.js` |
 | Use our own frame or monogram | See `public/frames/README.md`, then set `DESIGN` in `public/js/config.js` |
-| The on-phone watercolour look | `public/js/fallback/watercolour.js` (numbers near the top of `watercolorize`) |
+| The painting style / AI instructions | `public/js/ai/styles.js` |
+| Which free Hugging Face artists are tried, and in what order | `public/js/ai/spaces.js` |
 
 ## The AI
 
