@@ -4,6 +4,7 @@
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { DEFAULT_STYLE, STYLE_VARIANTS } from "../prompts/watercolour.js";
 
 export const LANG_CODES = ["en", "gu", "hi"];
 const TEXT_MAX = 80;
@@ -13,6 +14,7 @@ export function defaultSettings(config) {
   return {
     studioOpen: config.studioOpen,
     dailyPortraitCap: config.dailyPortraitCap,
+    styleVariant: DEFAULT_STYLE, // which watercolour style every guest gets (chosen in the style lab)
     // null = use the wording built into the app
     coupleNames: null,
     keepsakeVenueLine: null,
@@ -36,6 +38,10 @@ export function cleanPatch(patch = {}) {
     const n = Number.parseInt(patch.dailyPortraitCap, 10);
     if (!Number.isFinite(n) || n < 0 || n > 100_000) throw new Error("Daily cap must be a number from 0 to 100000.");
     out.dailyPortraitCap = n;
+  }
+  if ("styleVariant" in patch) {
+    if (!STYLE_VARIANTS.some((v) => v.id === patch.styleVariant)) throw new Error("Unknown style.");
+    out.styleVariant = patch.styleVariant;
   }
   for (const k of ["coupleNames", "keepsakeVenueLine", "keepsakeFooterLine"]) if (k in patch) out[k] = text(patch[k]);
   if (patch.siteVenueLine && typeof patch.siteVenueLine === "object") {

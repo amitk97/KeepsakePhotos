@@ -55,6 +55,22 @@
                 <div id="testResult" class="test-result hidden" aria-live="polite"></div>
             </section>
 
+            <!-- Style lab -->
+            <section class="card">
+                <h2>Style lab</h2>
+                <p class="lead">Paint one real photo in each watercolour style, then pick the one every guest gets. Uses a little free allowance per style.</p>
+                <p>Current style: <strong id="currentStyle">–</strong></p>
+                <div class="form">
+                    <label class="field-label" for="labEngine">Engine</label>
+                    <select id="labEngine" class="input"></select>
+                    <label class="field-label" for="labPhoto">Photo (ideally someone in a wedding outfit)</label>
+                    <input id="labPhoto" type="file" accept="image/*,.heic,.heif" class="input">
+                    <button id="labBtn" type="button" class="btn btn-primary" disabled>Paint in every style</button>
+                </div>
+                <p id="labMsg" class="status hidden" aria-live="polite"></p>
+                <div id="labResults" class="lab-grid"></div>
+            </section>
+
             <!-- Engines -->
             <section class="card">
                 <h2>AI engines</h2>

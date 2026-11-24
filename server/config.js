@@ -45,6 +45,10 @@ export function loadConfig(env = process.env) {
     fluxApiToken: env.FLUX_API_TOKEN || "",
     fluxTimeoutMs: int(env.FLUX_TIMEOUT_MS, 150_000), // includes a possible cold start
 
+    // Optional: Real-ESRGAN upscaler on Modal, for paintings smaller than the keepsake window.
+    upscaleEndpointUrl: env.UPSCALE_ENDPOINT_URL || "",
+    upscaleTimeoutMs: int(env.UPSCALE_TIMEOUT_MS, 45_000),
+
     geminiApiKey: env.GEMINI_API_KEY || "",
     geminiModel: env.GEMINI_IMAGE_MODEL || "gemini-3.1-flash-image",
     geminiApiBase: env.GEMINI_API_BASE || "https://generativelanguage.googleapis.com/v1beta/models",

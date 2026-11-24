@@ -1,8 +1,12 @@
 // Admin page: status, studio switch, wedding-day test, wording and limits.
 
+import { processFile } from "../js/photo.js";
+
 const $ = (id) => document.getElementById(id);
 const LANGS = ["en", "gu", "hi"];
 let refreshTimer = null;
+let latest = null; // last status from the server
+let labPhoto = null;
 
 async function api(path, body) {
   const res = await fetch(`/api/admin/${path}`, {
@@ -57,7 +61,21 @@ function engineRow(e) {
   return el("tr", {}, el("td", {}, e.name), el("td", {}, status), el("td", {}, e.configured ? allowance : "–"));
 }
 
+function renderStyles(s) {
+  const current = s.styles.find((x) => x.id === s.settings.styleVariant) || s.styles[0];
+  $("currentStyle").textContent = `${current.name}: ${current.description}`;
+  const usable = s.engines.filter((e) => e.configured);
+  const sel = $("labEngine");
+  const keep = sel.value;
+  sel.replaceChildren(...(usable.length ? usable.map((e) => el("option", { value: e.name }, e.name)) : [el("option", { value: "" }, "No engine set up yet")]));
+  if (usable.some((e) => e.name === keep)) sel.value = keep;
+  $("labBtn").disabled = !labPhoto || !usable.length;
+  document.querySelectorAll(".lab-card").forEach((c) => c.classList.toggle("chosen", c.dataset.style === s.settings.styleVariant));
+}
+
 function render(s) {
+  latest = s;
+  renderStyles(s);
   $("statPortraits").textContent = s.portraitsToday;
   $("statCap").textContent = s.dailyPortraitCap;
   $("statQueue").textContent = `${s.queue.active} / ${s.queue.waiting}`;
@@ -192,6 +210,66 @@ $("testBtn").addEventListener("click", async () => {
   } finally {
     btn.disabled = false;
     btn.textContent = "Run the test";
+  }
+});
+
+$("labPhoto").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  labPhoto = null;
+  $("labBtn").disabled = true;
+  if (!file) return;
+  try {
+    labPhoto = await processFile(file);
+    if (latest) renderStyles(latest);
+  } catch {
+    alert("Couldn't read that photo.");
+  }
+});
+
+async function chooseStyle(id) {
+  try {
+    render(await api("settings", { styleVariant: id }));
+    $("labMsg").textContent = "Saved. Every guest now gets this style.";
+    $("labMsg").classList.remove("hidden");
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+$("labBtn").addEventListener("click", async () => {
+  const btn = $("labBtn");
+  const msg = $("labMsg");
+  btn.disabled = true;
+  msg.textContent = "Painting… about 30 seconds per style (longer if the engine is asleep).";
+  msg.classList.remove("hidden");
+  const grid = $("labResults");
+  grid.replaceChildren();
+  try {
+    const r = await api("lab", { image: labPhoto.base64, smallImage: labPhoto.smallBase64, engine: $("labEngine").value });
+    grid.replaceChildren(
+      el("div", { className: "lab-card" }, el("img", { src: labPhoto.dataUrl, alt: "Original photo" }), el("strong", {}, "Original")),
+      ...r.results.map((x) => {
+        const card = el(
+          "div",
+          { className: "lab-card", "data-style": x.id },
+          x.image ? el("img", { src: x.image, alt: `${x.name} style` }) : el("div", {}, x.error || "Failed"),
+          el("strong", {}, x.name),
+          x.ok ? `${x.seconds}s` : ""
+        );
+        if (x.ok) {
+          const use = el("button", { type: "button", className: "btn btn-secondary" }, "Use this style");
+          use.addEventListener("click", () => chooseStyle(x.id));
+          card.append(use);
+        }
+        return card;
+      })
+    );
+    msg.textContent = "Done. Pick the one you like best.";
+    if (latest) renderStyles(latest);
+  } catch (err) {
+    msg.textContent = err.message;
+  } finally {
+    btn.disabled = false;
   }
 });
 

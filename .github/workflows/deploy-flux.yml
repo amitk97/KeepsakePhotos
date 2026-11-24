@@ -24,6 +24,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -37,3 +38,10 @@ jobs:
           KEEPSAKE_WARM: ${{ inputs.warm || '0' }}
           KEEPSAKE_MAX_GPUS: ${{ inputs.max_gpus || '4' }}
         run: modal deploy flux-service/flux_app.py
+      # Paints one test portrait with the live service (skipped if the secrets aren't set).
+      - name: Check the live service works
+        env:
+          FLUX_ENDPOINT_URL: ${{ secrets.FLUX_ENDPOINT_URL }}
+          FLUX_API_TOKEN: ${{ secrets.FLUX_API_TOKEN }}
+          UPSCALE_ENDPOINT_URL: ${{ secrets.UPSCALE_ENDPOINT_URL }}
+        run: python flux-service/smoke_test.py

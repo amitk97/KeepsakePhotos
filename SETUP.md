@@ -41,6 +41,8 @@ Make a long random string (e.g. from <https://www.random.org/strings/>, or mash 
    - `MODAL_TOKEN_SECRET` = Token Secret from step 3.4
 2. **Actions** tab → **Deploy FLUX to Modal** → **Run workflow** (warm = 0) → wait about 3 minutes for the green tick.
 3. In Modal, open **Apps → keepsake-flux**. Copy the URL of the `generate` endpoint (looks like `https://YOURNAME--keepsake-flux-caricaturist-generate.modal.run`). This is **value ③**.
+   Also copy the `upscale` endpoint (`…-upscaler-upscale.modal.run`). This is **value ⑥** (optional: makes Cloudflare's slightly smaller paintings print sharply).
+4. Optional, so GitHub checks the live service after every deploy: add three more repository secrets, `FLUX_ENDPOINT_URL` = value ③, `FLUX_API_TOKEN` = value ②, `UPSCALE_ENDPOINT_URL` = value ⑥. Each check paints one test portrait (a few cents of credit).
 
 ## 4b. Cloudflare: the free first painter
 
@@ -57,6 +59,7 @@ Make a long random string (e.g. from <https://www.random.org/strings/>, or mash 
    - `FLUX_API_TOKEN` = value ②
    - `CLOUDFLARE_ACCOUNT_ID` = value ④
    - `CLOUDFLARE_API_TOKEN` = value ⑤
+   - `UPSCALE_ENDPOINT_URL` = value ⑥ (optional)
    - `ADMIN_PASSWORD` = a password for your admin page (choose your own; don't reuse one)
    - Leave the four `GOOGLE_…` boxes empty for now
 4. Deploy. Your guest link is at the top, e.g. `https://keepsakephotos.onrender.com`.
@@ -66,7 +69,9 @@ Make a long random string (e.g. from <https://www.random.org/strings/>, or mash 
 
 Open the link on your phone and make a portrait. **The very first one takes several minutes** (Modal downloads the ~30 GB model once and saves it). After that, a cold start is about 1–2 minutes and a warm portrait about 15–30 seconds.
 
-Try 10–20 photos with real outfits. To tweak the style or outfit faithfulness, edit `PROMPT` in `flux-service/flux_app.py` and commit. GitHub redeploys it automatically.
+Try 10–20 photos with real outfits, using the admin page's **style lab** to compare styles. To write your own style, edit `server/prompts/watercolour.js`.
+
+The first start after a deploy takes a few minutes (Modal downloads the model and saves a memory snapshot); later cold starts restore the snapshot and are much quicker.
 
 ---
 
@@ -77,6 +82,7 @@ Open `https://…onrender.com/admin` and log in with `ADMIN_PASSWORD`. From ther
 - switch the AI studio off (guests then get the on-phone watercolour);
 - change the daily cap, the names and lines printed on keepsakes, the website venue line and the message suggestions in all three languages;
 - run the **wedding-day test** (paints one test portrait per engine and checks Drive);
+- use the **style lab**: upload a real photo, see it in each watercolour style (Classic soft, Rich fabric detail, Loose and airy, Storybook) and pick the one every guest gets;
 - open the **printable QR sign** (A4 poster or 4 table cards).
 
 Settings are saved on the server. On Render's free plan they're lost when the server restarts, until Google Drive is connected (they're then backed up there). For anything permanent before then, change `public/js/config.js` or `public/js/i18n/strings.js`.

@@ -7,13 +7,14 @@ export function createFluxProvider({ endpointUrl, apiToken, timeoutMs, fetchImpl
     name: "flux",
     configured: Boolean(endpointUrl && apiToken),
 
-    async createCaricature({ imageBase64 }) {
+    // prompt: the chosen watercolour style; omitted = the service's built-in default.
+    async createCaricature({ imageBase64, prompt }) {
       let res;
       try {
         res = await fetchImpl(endpointUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiToken}` },
-          body: JSON.stringify({ image: imageBase64 }),
+          body: JSON.stringify(prompt ? { image: imageBase64, prompt } : { image: imageBase64 }),
           // Generous: the first portrait after a quiet spell includes loading the model.
           signal: AbortSignal.timeout(timeoutMs),
         });
