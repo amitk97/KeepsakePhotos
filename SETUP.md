@@ -57,6 +57,8 @@ Make a long random string (e.g. from <https://www.random.org/strings/>, or mash 
    - `FLUX_API_TOKEN` = value ②
    - `CLOUDFLARE_ACCOUNT_ID` = value ④
    - `CLOUDFLARE_API_TOKEN` = value ⑤
+   - `ADMIN_PASSWORD` = a password for your admin page (choose your own; don't reuse one)
+   - Leave the four `GOOGLE_…` boxes empty for now
 4. Deploy. Your guest link is at the top, e.g. `https://keepsakephotos.onrender.com`.
 5. Check it: open `https://…onrender.com/api/health`. It should list `cloudflare` and `flux` under `engines`, each with `"configured":true`.
 
@@ -68,12 +70,41 @@ Try 10–20 photos with real outfits. To tweak the style or outfit faithfulness,
 
 ---
 
+## Admin page
+
+Open `https://…onrender.com/admin` and log in with `ADMIN_PASSWORD`. From there you can:
+- see portraits made today, the queue, each AI engine's status and free allowance left, and recent problems;
+- switch the AI studio off (guests then get the on-phone watercolour);
+- change the daily cap, the names and lines printed on keepsakes, the website venue line and the message suggestions in all three languages;
+- run the **wedding-day test** (paints one test portrait per engine and checks Drive);
+- open the **printable QR sign** (A4 poster or 4 table cards).
+
+Settings are saved on the server. On Render's free plan they're lost when the server restarts, until Google Drive is connected (they're then backed up there). For anything permanent before then, change `public/js/config.js` or `public/js/i18n/strings.js`.
+
+## Later: connect Google Drive (optional)
+
+Every finished keepsake is then uploaded to a shared folder. Until this is done, nothing is uploaded.
+
+1. Go to <https://console.cloud.google.com>, create a project (e.g. "Wedding keepsake").
+2. **APIs & Services → Library →** enable **Google Drive API**.
+3. **OAuth consent screen:** choose *External*, fill in the app name and your email, add the scope `…/auth/drive.file`, then set **Publishing status → In production**. (In "Testing" mode Google expires the connection after 7 days. `drive.file` is a non-sensitive scope, so no Google review is needed.)
+4. **Credentials → Create credentials → OAuth client ID →** type **Desktop app**. Copy the client ID and secret.
+5. On a computer with Node 22 and this repo:
+   ```bash
+   GOOGLE_CLIENT_ID=… GOOGLE_CLIENT_SECRET=… node scripts/google-drive-auth.js
+   ```
+   Open the link it prints, sign in with the Google account that should own the folder, and allow access. It creates a **"Pooja & Amit Wedding Keepsakes"** folder and prints `GOOGLE_REFRESH_TOKEN` and `GOOGLE_DRIVE_FOLDER_ID`.
+6. Add all four `GOOGLE_…` values in Render → Environment. The admin page should then say **Connected**.
+7. In Google Drive, share the folder with your partner.
+
+The app can only see files and the folder it created, nothing else in your Drive.
+
 ## Wedding day checklist
 
 - [ ] **~1 hour before:** Actions → Deploy FLUX to Modal → Run workflow with **warm = 1** (or 2 for a big crowd). Portraits are now instant-start; you pay for that GPU by the hour.
 - [ ] Render: switch the service to the **Starter** plan so the site never sleeps.
-- [ ] Make one test portrait.
-- [ ] Put the link on a QR code.
+- [ ] Admin page → **Run the test**: should say ✅ Ready.
+- [ ] Admin page → **Open the sign** → print the QR poster and table cards.
 - [ ] **After the wedding:** run the workflow again with **warm = 0**, so nothing runs (or costs) when unused. Set Render back to Free.
 
 ## Troubleshooting

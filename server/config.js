@@ -57,6 +57,19 @@ export function loadConfig(env = process.env) {
     // How many portraits are painted at the same time; the rest wait in line.
     maxConcurrent: int(env.MAX_CONCURRENT, 4),
 
+    // Admin page at /admin. Off unless a password is set.
+    adminPassword: env.ADMIN_PASSWORD || "",
+    // Where admin-page settings are saved. Empty = memory only.
+    settingsFile: env.SETTINGS_FILE ?? "data/settings.json",
+
+    // Google Drive uploads of finished keepsakes. Off until all four are set (see SETUP.md).
+    googleClientId: env.GOOGLE_CLIENT_ID || "",
+    googleClientSecret: env.GOOGLE_CLIENT_SECRET || "",
+    googleRefreshToken: env.GOOGLE_REFRESH_TOKEN || "",
+    googleDriveFolderId: env.GOOGLE_DRIVE_FOLDER_ID || "",
+    maxKeepsakeBytes: int(env.MAX_KEEPSAKE_BYTES, 12 * 1024 * 1024),
+
+    startedAt: new Date().toISOString(),
     allowedOrigin: env.ALLOWED_ORIGIN || "",
     rateLimitPerHour: int(env.RATE_LIMIT_PER_HOUR, 15),
     maxBodyBytes: int(env.MAX_BODY_BYTES, 7 * 1024 * 1024),

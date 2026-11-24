@@ -262,7 +262,8 @@ def main():
             flux_env = {**env, "PORT": str(flux_port), "GEMINI_API_KEY": "",
                         "FLUX_ENDPOINT_URL": f"http://127.0.0.1:{gemini_port}/flux", "FLUX_API_TOKEN": "flux-secret",
                         "CLOUDFLARE_ACCOUNT_ID": "acct", "CLOUDFLARE_API_TOKEN": "cf-secret",
-                        "CLOUDFLARE_API_BASE": f"http://127.0.0.1:{gemini_port}/cf", "IMAGE_PROVIDERS": "cloudflare,flux"}
+                        "CLOUDFLARE_API_BASE": f"http://127.0.0.1:{gemini_port}/cf", "IMAGE_PROVIDERS": "cloudflare,flux",
+                        "ADMIN_PASSWORD": "e2e-pass", "SETTINGS_FILE": ""}
             flux_server = subprocess.Popen(["node", "server/index.js"], cwd=ROOT, env=flux_env)
             try:
                 for _ in range(50):
@@ -311,6 +312,65 @@ def main():
                 expect(op.locator("#quickNote")).to_be_visible()
                 op.screenshot(path=OUT / "7-offline.png", full_page=True)
                 octx.close()
+
+                # ---- Admin page ----
+                site = f"http://127.0.0.1:{flux_port}"
+                actx = browser.new_context(viewport={"width": 430, "height": 900})
+                ap = actx.new_page()
+                ap.goto(f"{site}/admin")
+                expect(ap.locator("#loginCard")).to_be_visible()
+                ap.fill("#password", "wrong")
+                ap.click("#loginForm button")
+                expect(ap.locator("#loginError")).to_have_text("Wrong password.")
+                ap.fill("#password", "e2e-pass")
+                ap.click("#loginForm button")
+                expect(ap.locator("#dash")).to_be_visible()
+                expect(ap.locator("#enginesBody tr")).to_have_count(2)
+                expect(ap.locator("#driveStatus")).to_contain_text("Not connected yet")
+
+                # Change wording: guests see it
+                ap.fill("#venue-en", "Test Venue • May 2028")
+                ap.fill("#presets-en", "Hello from admin\nSecond idea")
+                ap.click("#settingsForm button[type=submit]")
+                expect(ap.locator("#settingsMsg")).to_contain_text("Saved")
+                gctx = browser.new_context(viewport={"width": 390, "height": 844})
+                gp = gctx.new_page()
+                gp.goto(site)
+                expect(gp.locator("[data-i18n=venueLine]")).to_have_text("Test Venue • May 2028")
+                gp.click("[data-action=begin]")
+                expect(gp.locator("#suggestionChips .chip")).to_have_count(2)
+                expect(gp.locator("#suggestionChips .chip").first).to_have_text("Hello from admin")
+
+                # Close the studio: guests get the on-phone watercolour
+                ap.uncheck("#studioOpen")
+                ap.wait_for_timeout(300)
+                gp.set_input_files("#fileInput", str(photo))
+                gp.fill("#guestName", "Closed Studio")
+                gp.click("#submitBtn")
+                expect(gp.locator("#quickNote")).to_be_visible(timeout=20000)
+                ap.check("#studioOpen")
+                gctx.close()
+
+                # Wedding-day test
+                ap.click("#testBtn")
+                expect(ap.locator("#testResult .verdict")).to_contain_text("Ready", timeout=30000)
+                expect(ap.locator("#testResult img")).to_have_count(2)
+                ap.screenshot(path=OUT / "8-admin.png", full_page=True)
+                actx.close()
+
+                # ---- QR sign decodes to the site ----
+                sctx = browser.new_context(viewport={"width": 900, "height": 1300})
+                sp = sctx.new_page()
+                sp.goto(f"{site}/sign/")
+                expect(sp.locator(".qr svg")).to_have_count(1)
+                sp.screenshot(path=OUT / "9-sign.png", full_page=True)
+                qr_png = sp.locator(".qr").first.screenshot()
+                import numpy as np, cv2
+                decoded = cv2.QRCodeDetector().detectAndDecode(cv2.imdecode(np.frombuffer(qr_png, np.uint8), cv2.IMREAD_GRAYSCALE))[0]
+                assert decoded == f"{site}/", f"QR decoded to {decoded!r}"
+                sp.select_option("#size", "card")
+                expect(sp.locator(".qr svg")).to_have_count(4)
+                sctx.close()
             finally:
                 flux_server.terminate()
             browser.close()

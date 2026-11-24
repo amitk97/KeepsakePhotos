@@ -21,6 +21,12 @@ function initialLang() {
 }
 
 let current = initialLang();
+// Wording the hosts changed on the admin page, e.g. { en: { venueLine: "…", presets: [...] } }.
+let overrides = {};
+
+export function setOverrides(next) {
+  overrides = next || {};
+}
 
 export function getLang() {
   return current;
@@ -28,7 +34,7 @@ export function getLang() {
 
 // t("queue", 3, 1) → text. Falls back to English if a key is missing.
 export function t(key, ...args) {
-  const value = STRINGS[current]?.[key] ?? STRINGS.en[key];
+  const value = overrides[current]?.[key] ?? STRINGS[current]?.[key] ?? overrides.en?.[key] ?? STRINGS.en[key];
   if (typeof value === "function") return value(...args);
   return value ?? key;
 }

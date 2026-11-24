@@ -15,6 +15,9 @@ server.listen(config.port, config.host, () => {
   console.log(`Keepsake studio running on http://localhost:${config.port}`);
   console.log(`Image engines, in order: ${config.imageProviders.join(" → ")} → on-phone watercolour`);
   if (!config.studioOpen) console.warn("STUDIO_OPEN=false: guests get the on-phone watercolour only.");
+  console.log(config.adminPassword ? "Admin page: /admin" : "Admin page off (set ADMIN_PASSWORD to turn it on).");
+  const drive = [config.googleClientId, config.googleClientSecret, config.googleRefreshToken, config.googleDriveFolderId];
+  console.log(drive.every(Boolean) ? "Google Drive uploads: on" : "Google Drive uploads: off (not connected)");
 });
 
 for (const signal of ["SIGINT", "SIGTERM"]) {

@@ -51,6 +51,9 @@ Environment variables (see `.env.example`):
 | `ALLOWED_ORIGIN` | | | e.g. `https://keepsake.example.com`; blocks other sites using your server |
 | `RATE_LIMIT_PER_HOUR` | | `15` | Portraits per guest IP per hour |
 | `TRUST_PROXY` | | `false` | Set `true` on Render/Railway/Fly so rate limits see real guest IPs |
+| `ADMIN_PASSWORD` | | | Turns on the admin page at `/admin` |
+| `GOOGLE_CLIENT_ID` / `_SECRET` / `_REFRESH_TOKEN` / `GOOGLE_DRIVE_FOLDER_ID` | | | Google Drive uploads (off until all four set) |
+| `SETTINGS_FILE` | | `data/settings.json` | Where admin-page settings are saved |
 | `PORT` | | `3000` | |
 
 Check it's set up: `GET /api/health` returns `{"ok":true,"configured":true}`.
@@ -69,7 +72,10 @@ server/
   gemini/client.js    Gemini REST client (timeouts, retries on 429/5xx only)
   gemini/caricature.js  describe outfit → paint caricature
   gemini/prompts.js   ← tune the AI wording here
-  lib/                http helpers, rate limiter, static file server
+  lib/                http, rate limiter, static files, settings store, admin sessions, problem log
+  routes/admin.js     admin API + wedding-day test; routes/keepsake.js Drive upload hand-off
+  drive/client.js     Google Drive uploads and settings backup (drive.file permission)
+scripts/google-drive-auth.js   one-time Drive connection
 flux-service/
   flux_app.py         FLUX Kontext on Modal (prompt, GPU, warm/scale settings)
 .github/workflows/    deploy FLUX to Modal (button in Actions tab), run tests
@@ -90,6 +96,8 @@ public/
   js/design.js        loads your own frame and monogram (see frames/README.md)
   frames/             frame template and spec for your own artwork
   sw.js, manifest     offline support and "add to home screen"
+  admin/              hosts' admin page
+  sign/               printable QR sign (QR library: MIT, Kazuhiko Arase)
   js/portrait/        canvas layout (compose.js), shapes, text wrapping
 test/
   *.test.js           unit + API tests (npm test)
@@ -99,7 +107,7 @@ test/
 ## Testing
 
 ```bash
-npm test                         # 50 server, engine-chain, translation & layout tests, no keys needed
+npm test                         # 68 server, admin, Drive, engine-chain, translation & layout tests, no keys needed
 python3 test/e2e/run_e2e.py      # full guest journey in Chrome (needs Playwright + Pillow)
 ```
 
