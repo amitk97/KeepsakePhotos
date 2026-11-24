@@ -5,9 +5,10 @@
 
 const KEEP_RULES =
   "Keep every person clearly recognisable: same face shape, skin tone, hair, beard and expression. " +
-  "If there are several people, include every one of them, each equally recognisable, arranged naturally to fit a portrait-shaped painting. " +
+  "Paint only the people who are in the photo, exactly as many as there are: never add anyone. If there are several people, include every one of them, each equally recognisable. " +
   "Keep their outfits exactly the same: identical colours, fabrics, textures, sheen, patterns, embroidery, borders, " +
-  "drape, silhouette and jewellery. Do not change, simplify or restyle the clothing. ";
+  "drape, silhouette and jewellery. Do not change, simplify or restyle the clothing. " +
+  "Leave out any writing or logos on clothes rather than inventing letters. ";
 
 const ENDING =
   "Pure watercolour only: no ink outlines, no pencil, no sketch lines. " +
@@ -19,9 +20,10 @@ export const STYLE_VARIANTS = [
     name: "Wedding caricature",
     description: "A real caricature: big heads, big smiles, small bodies. The default.",
     prompt:
-      "Turn this photo into a hand-painted watercolour caricature, like a caricature artist at a wedding. " +
-      "Exaggerate playfully: noticeably bigger heads on smaller bodies, big warm smiles, expressive eyes, " +
-      "and each person's most distinctive features gently emphasised, always flattering. " +
+      "Turn this photo into a classic caricature painted in watercolour, like a caricature artist at a wedding. " +
+      "Show the whole person from head to feet. Make the head huge, about as big as the rest of the body, on a small, cute body. " +
+      "Strongly exaggerate each person's most distinctive features (smile, eyebrows, hair, beard, nose, cheeks) in a fun, flattering way. " +
+      "Replace the background with plain paper; keep only a hint of the setting. " +
       KEEP_RULES +
       "Paint the clothes in soft watercolour washes with clear detail. " +
       ENDING,
