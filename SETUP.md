@@ -1,9 +1,12 @@
 # Setup guide (all in the cloud, about 30 minutes)
 
-You'll create 3 accounts and copy 4 values between them. Nothing to install on your computer.
+You'll create 4 free accounts and copy a few values between them. Nothing to install on your computer.
+
+**How portraits get painted:** Cloudflare (free daily allowance) → Modal FLUX (free monthly credit) → if both are unavailable, the guest's own phone paints a simpler watercolour. Guests always get a portrait.
 
 | Service | What it does | Cost |
 |---|---|---|
+| **Cloudflare** | First AI painter: FLUX.2 Klein, free ~80 portraits/day | Free, no card |
 | **Hugging Face** | Where the free FLUX model is downloaded from | Free |
 | **Modal** | Runs FLUX on a cloud GPU only when a guest makes a portrait | Pay per second of GPU use (Modal includes some free credit each month) |
 | **Render** | Hosts the website: the link you send guests | Free plan; ~$7/month "Starter" avoids sleeping |
@@ -39,6 +42,12 @@ Make a long random string (e.g. from <https://www.random.org/strings/>, or mash 
 2. **Actions** tab → **Deploy FLUX to Modal** → **Run workflow** (warm = 0) → wait about 3 minutes for the green tick.
 3. In Modal, open **Apps → keepsake-flux**. Copy the URL of the `generate` endpoint (looks like `https://YOURNAME--keepsake-flux-caricaturist-generate.modal.run`). This is **value ③**.
 
+## 4b. Cloudflare: the free first painter
+
+1. Sign up at <https://dash.cloudflare.com/sign-up> (free plan, no card).
+2. Copy your **Account ID** (right-hand side of the dashboard home, or under *Workers & Pages*). This is **value ④**.
+3. **My Profile → API Tokens → Create Token →** use the **"Workers AI"** template → Create. Copy it. This is **value ⑤**.
+
 ## 5. Render: the website
 
 1. Sign up at <https://render.com> with GitHub.
@@ -46,9 +55,10 @@ Make a long random string (e.g. from <https://www.random.org/strings/>, or mash 
 3. When asked, fill in:
    - `FLUX_ENDPOINT_URL` = value ③
    - `FLUX_API_TOKEN` = value ②
-   - `GEMINI_API_KEY`: optional backup (leave blank to skip)
+   - `CLOUDFLARE_ACCOUNT_ID` = value ④
+   - `CLOUDFLARE_API_TOKEN` = value ⑤
 4. Deploy. Your guest link is at the top, e.g. `https://keepsakephotos.onrender.com`.
-5. Check it: open `https://…onrender.com/api/health`. It should say `"provider":"flux","configured":true`.
+5. Check it: open `https://…onrender.com/api/health`. It should list `cloudflare` and `flux` under `engines`, each with `"configured":true`.
 
 ## 6. First test
 
@@ -75,4 +85,5 @@ Try 10–20 photos with real outfits. To tweak the style or outfit faithfulness,
 | Modal log: "gated repo" / 403 from Hugging Face | Accept the FLUX licence (step 1.2) with the same account as your token |
 | Deploy action fails at "Deploy" | `MODAL_TOKEN_ID` / `MODAL_TOKEN_SECRET` wrong or missing |
 | Out of GPU memory | In `flux_app.py` set `GPU = "A100-80GB"` (or `KEEPSAKE_GPU` env) |
+| Guests got the "quick watercolour" note | All AI engines were busy or out of allowance. Check `/api/health` for which one is `usable: false` |
 | Long waits when busy | Run the workflow with a higher `max_gpus` |

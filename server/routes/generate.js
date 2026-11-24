@@ -1,23 +1,27 @@
-// POST /api/generate  body: { image: <base64 JPEG/PNG/WebP>, mimeType }
-// Response: { image: "data:image/png;base64,..." }  or  { error: "..." }
+// POST /api/generate
+//   headers: X-Request-Id (optional, lets the guest poll their place in line)
+//   body:    { image: <base64 JPEG ≤1536px>, smallImage?: <base64 JPEG <512px>, mimeType }
+// 200 → { image: "data:image/png;base64,...", engine }
+// 503 + { fallback: "filter" } → no AI engine available: the phone paints a free watercolour itself.
 
+import { randomUUID } from "node:crypto";
 import { HttpError, clientIp, readJsonBody, sendJson } from "../lib/http.js";
-import { NoImageError, ProviderBusyError } from "../providers/errors.js";
+import { NoImageError } from "../providers/errors.js";
+import { AllEnginesUnavailableError } from "../providers/chain.js";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
+const ID_RE = /^[A-Za-z0-9-]{8,64}$/;
+const SMALL_MAX = 1_000_000;
 
-export function createGenerateHandler({ config, provider, rateLimiter, logger = console }) {
+export function createGenerateHandler({ config, provider, rateLimiter, queue, portraitsToday, logger = console }) {
+  const useFilter = (res, reason, error) =>
+    sendJson(res, 503, { fallback: "filter", reason, error: error || "Our AI artists are resting." });
+
   return async function handleGenerate(req, res) {
     if (config.allowedOrigin && req.headers.origin && req.headers.origin !== config.allowedOrigin) {
       return sendJson(res, 403, { error: "Not allowed." });
     }
-    if (!provider.configured) {
-      logger.error(`Image provider "${provider.name}" is not configured (check FLUX_* / GEMINI_API_KEY)`);
-      return sendJson(res, 500, { error: "The art studio isn't set up yet. Please tell the hosts." });
-    }
-
-    const ip = clientIp(req, config.trustProxy);
 
     let body;
     try {
@@ -27,14 +31,26 @@ export function createGenerateHandler({ config, provider, rateLimiter, logger = 
       return sendJson(res, status, { error: err.message || "Invalid request." });
     }
 
-    const { image, mimeType = "image/jpeg" } = body;
+    const { image, smallImage, mimeType = "image/jpeg" } = body;
     if (typeof image !== "string" || image.length < 100 || !BASE64_RE.test(image)) {
+      return sendJson(res, 400, { error: "No photo received. Please try again." });
+    }
+    if (smallImage !== undefined && (typeof smallImage !== "string" || smallImage.length > SMALL_MAX || !BASE64_RE.test(smallImage))) {
       return sendJson(res, 400, { error: "No photo received. Please try again." });
     }
     if (!ALLOWED_TYPES.has(mimeType)) {
       return sendJson(res, 400, { error: "Unsupported photo type." });
     }
 
+    // No AI today? The phone paints the free watercolour (doesn't count against the guest's limit).
+    if (!config.studioOpen) return useFilter(res, "closed");
+    if (!provider.configured) {
+      logger.error("No image engine is configured (check CLOUDFLARE_*, FLUX_*, GEMINI_API_KEY)");
+      return useFilter(res, "not-configured");
+    }
+    if (portraitsToday.get() >= config.dailyPortraitCap) return useFilter(res, "daily-cap");
+
+    const ip = clientIp(req, config.trustProxy);
     const slot = rateLimiter.take(ip);
     if (!slot.allowed) {
       return sendJson(
@@ -45,19 +61,30 @@ export function createGenerateHandler({ config, provider, rateLimiter, logger = 
       );
     }
 
+    const headerId = String(req.headers["x-request-id"] || "");
+    const id = ID_RE.test(headerId) ? headerId : randomUUID();
+
     try {
-      const result = await provider.createCaricature({ imageBase64: image, mimeType });
-      return sendJson(res, 200, { image: `data:${result.mimeType};base64,${result.data}` });
+      const result = await queue.run(id, () =>
+        provider.createCaricature({ imageBase64: image, smallImageBase64: smallImage, mimeType })
+      );
+      portraitsToday.add(1);
+      return sendJson(res, 200, { image: `data:${result.mimeType};base64,${result.data}`, engine: result.engine });
     } catch (err) {
       logger.error("Generation failed:", err.message);
-      if (err instanceof NoImageError) {
-        return sendJson(res, 422, { error: "The artist couldn't paint this photo. Please try a different photo." });
-      }
-      rateLimiter.refund(ip); // not the guest's fault, so don't count it
-      if (err instanceof ProviderBusyError) {
-        return sendJson(res, 503, { error: "The art studio is busy right now. Please try again in a minute." });
-      }
-      return sendJson(res, 502, { error: "Unable to reach the art studio. Please try again." });
+      rateLimiter.refund(ip); // not the guest's fault
+      if (err instanceof NoImageError) return useFilter(res, "rejected", "The AI artist couldn't paint this photo.");
+      if (err instanceof AllEnginesUnavailableError) return useFilter(res, "unavailable");
+      return useFilter(res, "error");
     }
+  };
+}
+
+// GET /api/queue?id=…  → { position, active, waiting }   (position 0 = being painted now)
+export function createQueueHandler({ queue }) {
+  return function handleQueue(req, res) {
+    const id = new URL(req.url, "http://x").searchParams.get("id") || "";
+    const position = ID_RE.test(id) ? queue.position(id) : -1;
+    return sendJson(res, 200, { position, ...queue.stats() });
   };
 }

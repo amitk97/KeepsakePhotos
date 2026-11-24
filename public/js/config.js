@@ -2,7 +2,7 @@
 
 export const WEDDING = {
   coupleNames: "Pooja & Amit",
-  venueLine: "SOMERSET ESTATE  •  OCTOBER 24, 2026",
+  venueLine: "SOMERSET ESTATE  •  APRIL 2028", // placeholder until the date is set
   footerLine: "WITH LOVE & CELEBRATION  •  POOJA & AMIT",
   defaultMessage: "Cheers to Pooja & Amit!",
   presetMessages: [
@@ -23,7 +23,8 @@ export const THEME = {
 
 export const SETTINGS = {
   apiEndpoint: "/api/generate",
-  requestTimeoutMs: 280_000,
+  requestTimeoutMs: 200_000,
+  smallPhotoEdge: 496, // copy for the free Cloudflare engine (needs under 512px)
   maxPhotoEdge: 1536, // enough detail for fabric texture, small enough to upload quickly
   photoQuality: 0.9,
   maxFileBytes: 30 * 1024 * 1024,
@@ -32,10 +33,11 @@ export const SETTINGS = {
   progressMessages: [
     "Studying your outfit…",
     "Matching fabrics & colours…",
-    "Sketching in ink…",
     "Painting the watercolour…",
     "Adding the finishing touches…",
     "Warming up the studio, nearly there…",
   ],
   progressIntervalMs: 7000,
+  queuePollMs: 2500,
+  secondsPerPortrait: 25, // rough wait per guest ahead in line
 };

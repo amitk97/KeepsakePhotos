@@ -12,13 +12,17 @@ services:
         value: "22"
       - key: TRUST_PROXY
         value: "true"
-      - key: IMAGE_PROVIDER
-        value: flux
+      - key: IMAGE_PROVIDERS
+        value: cloudflare,flux # tried in order; then the free on-phone watercolour
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false # from Cloudflare dashboard
+      - key: CLOUDFLARE_API_TOKEN
+        sync: false # Workers AI token
+      - key: DAILY_PORTRAIT_CAP
+        value: "600"
+      - key: STUDIO_OPEN
+        value: "true"
       - key: FLUX_ENDPOINT_URL
         sync: false # paste from Modal
       - key: FLUX_API_TOKEN
         sync: false # same value as the Modal secret
-      - key: GEMINI_API_KEY
-        sync: false # optional backup; leave blank to skip
-      - key: IMAGE_FALLBACK
-        value: gemini # only used if GEMINI_API_KEY is set

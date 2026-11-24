@@ -70,3 +70,25 @@ export function startProgress(messages, intervalMs) {
   }, intervalMs);
   return () => clearInterval(timer);
 }
+
+function ordinal(n) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+// Shows "You're 3rd in line, about 1 minute" while waiting; hides it once painting starts.
+export function showQueuePosition(position, secondsEach) {
+  const el = $("queueStatus");
+  if (!(position > 0)) {
+    el.classList.add("hidden");
+    return;
+  }
+  const mins = Math.max(1, Math.round((position * secondsEach) / 60));
+  el.textContent = `You're ${ordinal(position)} in line, about ${mins} minute${mins === 1 ? "" : "s"}.`;
+  el.classList.remove("hidden");
+}
+
+export function setQuickNote(on) {
+  $("quickNote").classList.toggle("hidden", !on);
+}

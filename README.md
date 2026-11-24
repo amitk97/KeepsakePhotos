@@ -39,10 +39,13 @@ Environment variables (see `.env.example`):
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `IMAGE_PROVIDER` | | `flux` if `FLUX_ENDPOINT_URL` set, else `gemini` | Which AI paints |
+| `IMAGE_PROVIDERS` | | engines with credentials, free first | Engines tried in order, e.g. `cloudflare,flux` |
+| `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` | | | Free Cloudflare Workers AI engine |
+| `STUDIO_OPEN` | | `true` | `false` = on-phone watercolour only |
+| `DAILY_PORTRAIT_CAP` | | `600` | AI portraits per day across all guests |
+| `MAX_CONCURRENT` | | `4` | Portraits painted at once; others queue |
 | `FLUX_ENDPOINT_URL` | ✅ (flux) | | Modal `generate` endpoint URL |
 | `FLUX_API_TOKEN` | ✅ (flux) | | Shared secret, same as the Modal `keepsake-flux-auth` secret |
-| `IMAGE_FALLBACK` | | | e.g. `gemini`: automatic backup if FLUX fails |
 | `GEMINI_API_KEY` | ✅ (gemini) | | Gemini key, for Gemini mode or the backup |
 | `GEMINI_IMAGE_MODEL` | | `gemini-3.1-flash-image` | Model for both steps |
 | `ALLOWED_ORIGIN` | | | e.g. `https://keepsake.example.com`; blocks other sites using your server |
@@ -60,7 +63,9 @@ server/
   app.js              routes: /api/generate, /api/health, static files
   config.js           reads environment variables
   routes/generate.js  validates the upload, rate-limits, returns the portrait
-  providers/          flux.js, gemini.js, index.js (pick + fallback), errors.js
+  providers/          cloudflare.js, flux.js, gemini.js, chain.js (automatic switching), errors.js
+  prompts/            watercolour.js: the one art style
+  lib/queue.js        place-in-line; lib/usage.js daily allowance counting
   gemini/client.js    Gemini REST client (timeouts, retries on 429/5xx only)
   gemini/caricature.js  describe outfit → paint caricature
   gemini/prompts.js   ← tune the AI wording here
@@ -79,6 +84,7 @@ public/
   js/share.js         Save to Photos / Share, download
   js/storage.js       keeps name & message if the page reloads
   js/ui.js, state.js
+  js/sketch/          free on-phone watercolour (last-resort backup)
   js/portrait/        canvas layout (compose.js), shapes, text wrapping
 test/
   *.test.js           unit + API tests (npm test)
@@ -88,7 +94,7 @@ test/
 ## Testing
 
 ```bash
-npm test                         # 34 server, provider & layout tests, no keys needed
+npm test                         # 44 server, engine-chain & layout tests, no keys needed
 python3 test/e2e/run_e2e.py      # full guest journey in Chrome (needs Playwright + Pillow)
 ```
 

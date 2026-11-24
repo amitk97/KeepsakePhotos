@@ -33,13 +33,15 @@ GPU = os.environ.get("KEEPSAKE_GPU", "L40S")  # 48 GB, keeps the whole model on 
 WIDTH, HEIGHT = 880, 1184
 
 PROMPT = (
-    "Transform this photo into a charming hand-drawn watercolour and ink wedding caricature. "
+    "Repaint this photo as a soft, charming watercolour caricature painting for a wedding keepsake. "
     "Keep every person recognisable with the same face, skin tone, hairstyle and expression, "
-    "with a slightly enlarged head in a playful caricature style. "
+    "with a slightly enlarged head. "
     "Keep their outfits exactly the same: identical colours, fabrics, textures, sheen, patterns, "
-    "embroidery, borders, drape, silhouette and jewellery, painted in visible watercolour detail. "
+    "embroidery, borders, drape, silhouette and jewellery, painted in delicate watercolour washes. "
     "Do not change, simplify or restyle the clothing. "
-    "Plain warm ivory paper background with a soft watercolour wash. No text, no borders, no signature."
+    "Pure watercolour only: soft wet-on-wet blends, gentle colour bleeds, visible paper grain, "
+    "no ink outlines, no pencil, no sketch lines. "
+    "Plain warm ivory paper background with a light watercolour wash. No text, no borders, no signature."
 )
 
 image = (

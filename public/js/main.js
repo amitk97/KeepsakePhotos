@@ -5,8 +5,9 @@ import { state, clearPhoto } from "./state.js";
 import * as ui from "./ui.js";
 import { clearDraft, loadDraft, saveDraft } from "./storage.js";
 import * as camera from "./camera.js";
-import { processFile, toResizedJpeg, loadImage } from "./photo.js";
-import { requestCaricature } from "./api.js";
+import { processFile, preparePhoto, loadImage } from "./photo.js";
+import { fetchQueuePosition, newRequestId, requestCaricature } from "./api.js";
+import { watercolorize } from "./sketch/watercolor.js";
 import { composePortrait, waitForFonts } from "./portrait/compose.js";
 import { canShareFiles, downloadPortrait, sharePortrait } from "./share.js";
 
@@ -19,8 +20,10 @@ function goToStep(n) {
 
 /* ---------- Photo ---------- */
 
-function setPhoto({ dataUrl, base64 }) {
+function setPhoto({ dataUrl, base64, smallBase64 }) {
   state.photoBase64 = base64;
+  state.smallPhotoBase64 = smallBase64;
+  state.photoDataUrl = dataUrl;
   ui.showPhotoPreview(dataUrl);
 }
 
@@ -43,7 +46,7 @@ function capturePhoto() {
   try {
     const frame = camera.captureFrame();
     camera.closeLiveCamera();
-    setPhoto(toResizedJpeg(frame));
+    setPhoto(preparePhoto(frame));
   } catch (err) {
     camera.closeLiveCamera();
     ui.showError(err.message);
@@ -84,17 +87,44 @@ async function onSubmit(event) {
   await generate();
 }
 
+// Free, offline watercolour painted on the guest's phone when no AI artist is available.
+async function paintOnPhone() {
+  const photo = await loadImage(state.photoDataUrl);
+  return watercolorize(photo);
+}
+
 async function generate() {
   if (state.busy || !state.photoBase64) return;
   state.busy = true;
   goToStep(3);
+  ui.setQuickNote(false);
   const stopProgress = ui.startProgress(SETTINGS.progressMessages, SETTINGS.progressIntervalMs);
 
+  const requestId = newRequestId();
+  const poll = setInterval(async () => {
+    const { position } = await fetchQueuePosition(requestId);
+    ui.showQueuePosition(position, SETTINGS.secondsPerPortrait);
+  }, SETTINGS.queuePollMs);
+
   try {
-    const imageUrl = await requestCaricature(state.photoBase64);
-    const image = await loadImage(imageUrl);
+    let image;
+    let quick = false;
+    try {
+      const { image: url } = await requestCaricature({
+        photoBase64: state.photoBase64,
+        smallPhotoBase64: state.smallPhotoBase64,
+        requestId,
+      });
+      image = await loadImage(url);
+    } catch (err) {
+      if (!err.useFilter) throw err;
+      console.warn("Using on-phone watercolour:", err.message);
+      image = await paintOnPhone();
+      quick = true;
+    }
     await waitForFonts();
     composePortrait($("portraitCanvas"), { image, guestName: state.guestName, message: state.guestMessage });
+    ui.setQuickNote(quick);
     goToStep(4);
     $("shareBtn").classList.toggle("hidden", !(await canShareFiles($("portraitCanvas"), state.guestName)));
   } catch (err) {
@@ -102,6 +132,8 @@ async function generate() {
     goToStep(2);
     ui.showError(err.message || "Something went wrong painting your portrait. Please try again.");
   } finally {
+    clearInterval(poll);
+    ui.showQueuePosition(-1);
     stopProgress();
     state.busy = false;
   }

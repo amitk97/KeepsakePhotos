@@ -3,9 +3,12 @@
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { buildProvider, createImageProvider } from "./providers/index.js";
+import { createChain } from "./providers/chain.js";
 import { createRateLimiter } from "./lib/rateLimit.js";
 import { createStaticHandler } from "./lib/static.js";
-import { createGenerateHandler } from "./routes/generate.js";
+import { createQueue } from "./lib/queue.js";
+import { createDailyCounter } from "./lib/usage.js";
+import { createGenerateHandler, createQueueHandler } from "./routes/generate.js";
 import { sendJson } from "./lib/http.js";
 
 const PUBLIC_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
@@ -17,16 +20,20 @@ const SECURITY_HEADERS = {
   "Permissions-Policy": "camera=(self), microphone=(), geolocation=()",
 };
 
-// deps.provider: inject a ready provider (tests). deps.gemini: inject a fake Gemini client (tests).
+// deps.provider: inject a ready engine or chain (tests). deps.gemini: inject a fake Gemini client (tests).
 export function createApp(config, { provider, gemini, fetchImpl, logger = console, publicDir = PUBLIC_DIR } = {}) {
-  const imageProvider =
-    provider ||
-    (gemini
-      ? buildProvider("gemini", config, { geminiClient: gemini, logger })
-      : createImageProvider(config, { logger, fetchImpl }));
+  let imageProvider = provider;
+  if (!imageProvider && gemini) {
+    imageProvider = createChain([buildProvider("gemini", config, { geminiClient: gemini, logger })], { logger });
+  }
+  if (!imageProvider) imageProvider = createImageProvider(config, { logger, fetchImpl });
+  if (typeof imageProvider.status !== "function") imageProvider = createChain([imageProvider], { logger });
 
   const rateLimiter = createRateLimiter({ limit: config.rateLimitPerHour });
-  const handleGenerate = createGenerateHandler({ config, provider: imageProvider, rateLimiter, logger });
+  const queue = createQueue({ maxConcurrent: config.maxConcurrent });
+  const portraitsToday = createDailyCounter();
+  const handleGenerate = createGenerateHandler({ config, provider: imageProvider, rateLimiter, queue, portraitsToday, logger });
+  const handleQueue = createQueueHandler({ queue });
   const serveStatic = createStaticHandler(publicDir);
 
   return async function app(req, res) {
@@ -35,8 +42,17 @@ export function createApp(config, { provider, gemini, fetchImpl, logger = consol
 
     try {
       if (pathname === "/api/health") {
-        return sendJson(res, 200, { ok: true, provider: imageProvider.name, configured: imageProvider.configured });
+        return sendJson(res, 200, {
+          ok: true,
+          provider: imageProvider.name,
+          configured: imageProvider.configured,
+          studioOpen: config.studioOpen,
+          portraitsToday: portraitsToday.get(),
+          dailyCap: config.dailyPortraitCap,
+          engines: imageProvider.status(),
+        });
       }
+      if (pathname === "/api/queue") return handleQueue(req, res);
       if (pathname === "/api/generate") {
         if (req.method !== "POST") return sendJson(res, 405, { error: "Method not allowed." }, { Allow: "POST" });
         return await handleGenerate(req, res);
