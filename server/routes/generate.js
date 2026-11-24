@@ -14,7 +14,9 @@ const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 const ID_RE = /^[A-Za-z0-9-]{8,64}$/;
 const SMALL_MAX = 1_000_000;
 
-export function createGenerateHandler({ config, provider, rateLimiter, queue, portraitsToday, logger = console }) {
+// settings: the admin-page settings store (studio open, daily cap). Falls back to config.
+export function createGenerateHandler({ config, provider, rateLimiter, queue, portraitsToday, settings, logger = console }) {
+  const current = () => (settings ? settings.get() : config);
   const useFilter = (res, reason, error) =>
     sendJson(res, 503, { fallback: "filter", reason, error: error || "Our AI artists are resting." });
 
@@ -43,12 +45,13 @@ export function createGenerateHandler({ config, provider, rateLimiter, queue, po
     }
 
     // No AI today? The phone paints the free watercolour (doesn't count against the guest's limit).
-    if (!config.studioOpen) return useFilter(res, "closed");
+    const { studioOpen, dailyPortraitCap } = current();
+    if (!studioOpen) return useFilter(res, "closed");
     if (!provider.configured) {
       logger.error("No image engine is configured (check CLOUDFLARE_*, FLUX_*, GEMINI_API_KEY)");
       return useFilter(res, "not-configured");
     }
-    if (portraitsToday.get() >= config.dailyPortraitCap) return useFilter(res, "daily-cap");
+    if (portraitsToday.get() >= dailyPortraitCap) return useFilter(res, "daily-cap");
 
     const ip = clientIp(req, config.trustProxy);
     const slot = rateLimiter.take(ip);

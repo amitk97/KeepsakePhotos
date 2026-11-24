@@ -3,7 +3,7 @@
 // Pages and code: network first (updates arrive straight away), saved copy if offline.
 // Fonts: saved copy first. Portrait requests (/api/) are never cached.
 
-const CACHE = "keepsake-v2";
+const CACHE = "keepsake-v3";
 const SHELL = [
   "/",
   "/index.html",
@@ -24,6 +24,7 @@ const SHELL = [
   "/js/share.js",
   "/js/compare.js",
   "/js/design.js",
+  "/js/settings.js",
   "/js/i18n/index.js",
   "/js/i18n/strings.js",
   "/js/portrait/compose.js",
@@ -81,7 +82,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   if (url.origin === self.location.origin) {
-    if (url.pathname.startsWith("/api/")) return;
+    if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/admin")) return;
     event.respondWith(networkFirst(request));
   } else if (FONT_HOSTS.includes(url.hostname)) {
     event.respondWith(cacheFirst(request));

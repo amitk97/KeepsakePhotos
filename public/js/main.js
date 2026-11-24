@@ -4,6 +4,7 @@ import { SETTINGS } from "./config.js";
 import { applyTranslations, onLangChange, setLang, t } from "./i18n/index.js";
 import { hideCompare, initCompare, showCompare } from "./compare.js";
 import { getDesign, loadDesign } from "./design.js";
+import { loadSiteSettings, sendKeepsakeToHosts } from "./settings.js";
 import { state, clearPhoto } from "./state.js";
 import * as ui from "./ui.js";
 import { clearDraft, loadDraft, saveDraft } from "./storage.js";
@@ -134,6 +135,7 @@ async function generate() {
     const { frame, monogram } = getDesign();
     composePortrait($("portraitCanvas"), { image, guestName: state.guestName, message: state.guestMessage, nameLine, frame, monogram });
     showCompare(state.photoDataUrl, artUrl);
+    sendKeepsakeToHosts($("portraitCanvas"), state.guestName);
     ui.setQuickNote(quick);
     goToStep(4);
     $("shareBtn").classList.toggle("hidden", !(await canShareFiles($("portraitCanvas"), state.guestName)));
@@ -211,6 +213,10 @@ function init() {
   renderChips();
   onLangChange(renderChips);
   applyTranslations();
+  loadSiteSettings().then(() => {
+    applyTranslations();
+    renderChips();
+  });
   initCompare();
   loadDesign();
 

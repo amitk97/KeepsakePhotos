@@ -38,6 +38,11 @@ export function createStaticHandler(rootDir) {
     let info;
     try {
       info = await stat(filePath);
+      // /admin → /admin/
+      if (info.isDirectory()) {
+        res.writeHead(301, { Location: `${pathname}/` }).end();
+        return;
+      }
       if (!info.isFile()) throw new Error("not a file");
     } catch {
       res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" }).end("Not found");
