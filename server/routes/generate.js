@@ -8,6 +8,7 @@ import { randomUUID } from "node:crypto";
 import { HttpError, clientIp, readJsonBody, sendJson } from "../lib/http.js";
 import { NoImageError } from "../providers/errors.js";
 import { AllEnginesUnavailableError } from "../providers/chain.js";
+import { styleById } from "../prompts/watercolour.js";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
@@ -15,7 +16,7 @@ const ID_RE = /^[A-Za-z0-9-]{8,64}$/;
 const SMALL_MAX = 1_000_000;
 
 // settings: the admin-page settings store (studio open, daily cap). Falls back to config.
-export function createGenerateHandler({ config, provider, rateLimiter, queue, portraitsToday, settings, logger = console }) {
+export function createGenerateHandler({ config, provider, rateLimiter, queue, portraitsToday, settings, upscaler = null, logger = console }) {
   const current = () => (settings ? settings.get() : config);
   const useFilter = (res, reason, error) =>
     sendJson(res, 503, { fallback: "filter", reason, error: error || "Our AI artists are resting." });
@@ -45,7 +46,7 @@ export function createGenerateHandler({ config, provider, rateLimiter, queue, po
     }
 
     // No AI today? The phone paints the free watercolour (doesn't count against the guest's limit).
-    const { studioOpen, dailyPortraitCap } = current();
+    const { studioOpen, dailyPortraitCap, styleVariant } = current();
     if (!studioOpen) return useFilter(res, "closed");
     if (!provider.configured) {
       logger.error("No image engine is configured (check CLOUDFLARE_*, FLUX_*, GEMINI_API_KEY)");
@@ -68,9 +69,11 @@ export function createGenerateHandler({ config, provider, rateLimiter, queue, po
     const id = ID_RE.test(headerId) ? headerId : randomUUID();
 
     try {
-      const result = await queue.run(id, () =>
-        provider.createCaricature({ imageBase64: image, smallImageBase64: smallImage, mimeType })
+      const prompt = styleVariant ? styleById(styleVariant).prompt : undefined;
+      let result = await queue.run(id, () =>
+        provider.createCaricature({ imageBase64: image, smallImageBase64: smallImage, mimeType, prompt })
       );
+      if (upscaler) result = await upscaler.maybeUpscale(result);
       portraitsToday.add(1);
       return sendJson(res, 200, { image: `data:${result.mimeType};base64,${result.data}`, engine: result.engine });
     } catch (err) {

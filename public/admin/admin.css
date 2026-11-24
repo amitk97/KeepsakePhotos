@@ -36,3 +36,11 @@ textarea.input { resize: vertical; font-size: 15px; }
 .problems { list-style: none; padding: 0; margin: 0; font-size: 13px; }
 .problems li { padding: 6px 0; border-bottom: 1px solid var(--gold-soft); }
 .problems time { color: var(--muted); margin-right: 6px; }
+
+.lab-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 16px; }
+@media (min-width: 640px) { .lab-grid { grid-template-columns: repeat(4, 1fr); } }
+.lab-card { background: var(--ivory); border: 1px solid var(--gold-soft); border-radius: 12px; padding: 8px; font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
+.lab-card.chosen { border: 2px solid var(--green); }
+.lab-card img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 8px; background: #eee; }
+.lab-card .btn { padding: 6px 8px; font-size: 12px; }
+select.input { appearance: auto; }

@@ -40,11 +40,12 @@ export function createCloudflareProvider({
       return { usedToday: usage.get(), budget: dailyNeuronBudget, unit: "neurons" };
     },
 
-    async createCaricature({ smallImageBase64 }) {
+    // prompt: the chosen watercolour style (from the admin page); defaults to the classic style.
+    async createCaricature({ smallImageBase64, prompt }) {
       if (!smallImageBase64) throw new ProviderError("Cloudflare needs the small photo copy");
 
       const form = new FormData();
-      form.append("prompt", WATERCOLOUR_PROMPT);
+      form.append("prompt", prompt || WATERCOLOUR_PROMPT);
       form.append("input_image_0", new Blob([Buffer.from(smallImageBase64, "base64")], { type: "image/jpeg" }), "photo.jpg");
       form.append("width", String(width));
       form.append("height", String(height));

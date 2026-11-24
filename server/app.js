@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { buildProvider, createImageProvider } from "./providers/index.js";
 import { createChain } from "./providers/chain.js";
+import { createUpscaler } from "./providers/upscaler.js";
 import { createRateLimiter } from "./lib/rateLimit.js";
 import { createStaticHandler } from "./lib/static.js";
 import { createQueue } from "./lib/queue.js";
@@ -58,6 +59,14 @@ export function createApp(config, { provider, gemini, fetchImpl, drive: driveDep
   });
   const ready = settings.load();
 
+  const upscaler = createUpscaler({
+    endpointUrl: config.upscaleEndpointUrl,
+    apiToken: config.fluxApiToken,
+    timeoutMs: config.upscaleTimeoutMs,
+    logger,
+    ...(fetchImpl && { fetchImpl }),
+  });
+
   const rateLimiter = createRateLimiter({ limit: config.rateLimitPerHour });
   const keepsakeLimiter = createRateLimiter({ limit: 60 });
   const loginLimiter = createRateLimiter({ limit: 10, windowMs: 15 * 60_000 });
@@ -65,11 +74,11 @@ export function createApp(config, { provider, gemini, fetchImpl, drive: driveDep
   const portraitsToday = createDailyCounter();
   const sessions = createSessions({ password: config.adminPassword });
 
-  const handleGenerate = createGenerateHandler({ config, provider: imageProvider, rateLimiter, queue, portraitsToday, settings, logger });
+  const handleGenerate = createGenerateHandler({ config, provider: imageProvider, rateLimiter, queue, portraitsToday, settings, upscaler, logger });
   const handleQueue = createQueueHandler({ queue });
   const handleKeepsake = createKeepsakeHandler({ config, uploads, rateLimiter: keepsakeLimiter, logger });
   const handleAdmin = createAdminHandler({
-    config, sessions, settings, provider: imageProvider, queue, portraitsToday, drive, uploads, logbook: logger, loginLimiter,
+    config, sessions, settings, provider: imageProvider, queue, portraitsToday, drive, uploads, upscaler, logbook: logger, loginLimiter,
   });
   const serveStatic = createStaticHandler(publicDir);
 
@@ -90,6 +99,7 @@ export function createApp(config, { provider, gemini, fetchImpl, drive: driveDep
           dailyCap: s.dailyPortraitCap,
           engines: imageProvider.status(),
           driveConnected: drive.configured,
+          upscaler: upscaler.configured,
         });
       }
       if (pathname === "/api/settings") return sendJson(res, 200, settings.publicView({ uploadsEnabled: drive.configured }));

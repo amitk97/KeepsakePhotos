@@ -51,6 +51,7 @@ Environment variables (see `.env.example`):
 | `ALLOWED_ORIGIN` | | | e.g. `https://keepsake.example.com`; blocks other sites using your server |
 | `RATE_LIMIT_PER_HOUR` | | `15` | Portraits per guest IP per hour |
 | `TRUST_PROXY` | | `false` | Set `true` on Render/Railway/Fly so rate limits see real guest IPs |
+| `UPSCALE_ENDPOINT_URL` | | | Modal Real-ESRGAN upscaler for small paintings |
 | `ADMIN_PASSWORD` | | | Turns on the admin page at `/admin` |
 | `GOOGLE_CLIENT_ID` / `_SECRET` / `_REFRESH_TOKEN` / `GOOGLE_DRIVE_FOLDER_ID` | | | Google Drive uploads (off until all four set) |
 | `SETTINGS_FILE` | | `data/settings.json` | Where admin-page settings are saved |
@@ -67,7 +68,8 @@ server/
   config.js           reads environment variables
   routes/generate.js  validates the upload, rate-limits, returns the portrait
   providers/          cloudflare.js, flux.js, gemini.js, chain.js (automatic switching), errors.js
-  prompts/            watercolour.js: the one art style
+  prompts/            watercolour.js: the watercolour styles (picked in the admin style lab)
+  providers/upscaler.js  doubles small paintings via Modal Real-ESRGAN
   lib/queue.js        place-in-line; lib/usage.js daily allowance counting
   gemini/client.js    Gemini REST client (timeouts, retries on 429/5xx only)
   gemini/caricature.js  describe outfit → paint caricature
@@ -77,7 +79,9 @@ server/
   drive/client.js     Google Drive uploads and settings backup (drive.file permission)
 scripts/google-drive-auth.js   one-time Drive connection
 flux-service/
-  flux_app.py         FLUX Kontext on Modal (prompt, GPU, warm/scale settings)
+  flux_app.py         FLUX Kontext + Real-ESRGAN upscaler on Modal (memory snapshots for fast starts)
+  core.py             request checks (tested: python -m pytest flux-service)
+  smoke_test.py       checks the live service after each deploy
 .github/workflows/    deploy FLUX to Modal (button in Actions tab), run tests
 render.yaml           one-click website setup on Render
 public/
@@ -107,7 +111,8 @@ test/
 ## Testing
 
 ```bash
-npm test                         # 68 server, admin, Drive, engine-chain, translation & layout tests, no keys needed
+npm test                         # 74 server, admin, Drive, styles, upscaler, translation & layout tests
+python -m pytest flux-service    # 11 AI service tests
 python3 test/e2e/run_e2e.py      # full guest journey in Chrome (needs Playwright + Pillow)
 ```
 
