@@ -1,9 +1,12 @@
 // Before/after slider: the guest's photo on the left, the painting on the right.
 
 import { $ } from "./ui.js";
+import { t } from "./i18n/index.js";
 
 function setPosition(pct) {
   $("compare").style.setProperty("--pos", `${pct}%`);
+  // The painting shows on the right of the line, so its share is 100 - position.
+  $("compareRange").setAttribute("aria-valuetext", t("compareValue", 100 - Number(pct)));
 }
 
 export function showCompare(beforeUrl, afterUrl) {

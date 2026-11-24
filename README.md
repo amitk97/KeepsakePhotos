@@ -1,63 +1,46 @@
 # KeepsakePhotos
 
-A wedding keepsake studio for **Pooja & Amit**. Guests take or upload a photo, add a message, and get a hand-painted watercolour caricature (outfit and all) in a framed 4×6 keepsake they can save to their phone.
+A wedding keepsake studio for **Pooja & Amit** (April 2028). Guests scan a QR code, take a photo, add a message, and get a watercolour caricature of themselves, outfit and all, in a framed 4×6 keepsake they save to their phone.
 
-- **Runs entirely in the cloud:** the website on Render, and the AI (**FLUX.1 Kontext**, free open model) on a **Modal** serverless GPU that only runs, and only costs, while painting.
-- **No per-image AI fees:** you pay for GPU seconds, not per portrait. Gemini can be added as an automatic backup.
-- **Outfit-faithful:** FLUX Kontext edits the guest's photo, keeping colours, fabrics, embroidery and jewellery.
-- **No dependencies:** plain Node.js server plus vanilla JavaScript modules. No build step.
+👉 **To go live, follow [SETUP.md](SETUP.md)**: about 40 minutes, all in the browser.
 
-👉 **New here? Follow [SETUP.md](SETUP.md)**: about 30 minutes, nothing to install.
+**What it does**
+- Free AI painting chain: Cloudflare Workers AI → FLUX Kontext on Modal → the phone paints a simpler watercolour itself if neither is available. Guests always get a portrait.
+- English, Gujarati and Hindi; before/after slider; works with no signal once opened; add to home screen.
+- Hosts' admin page: live status, studio on/off, wording and limits, style lab, wedding-day test, printable QR sign.
+- Google Drive upload of finished keepsakes (off until connected).
+- Accessible (WCAG 2.2 AA checks in the browser test); no build step; no npm dependencies.
 
-## Run it locally
+## Run it on your computer
 
-Needs **Node.js 22.9+**.
+Needs **Node.js 22.9+**. No graphics card needed: the AI runs in the cloud.
 
 ```bash
-cp .env.example .env      # then paste your key into GEMINI_API_KEY
+cp .env.example .env      # fill in the values from SETUP.md (or leave empty to try the on-phone watercolour)
 npm start                 # http://localhost:3000
+npm run dev               # same, restarts when you change a file
 ```
 
-Get a key at <https://aistudio.google.com/apikey>.
+Phone cameras need HTTPS. To try it on your phone: `cloudflared tunnel --url http://localhost:3000` and open the https link it prints.
 
-> Phone cameras only work over **HTTPS** (or on `localhost`). To test on your phone, deploy it or use a tunnel such as `cloudflared tunnel --url http://localhost:3000`.
+## Settings
 
-## Deploy
+All in environment variables (Render → Environment, or `.env` locally). See `.env.example` for every option.
 
-Recommended: follow [SETUP.md](SETUP.md) (Render + Modal). Other hosts also work for the website:
-
-GitHub Pages can't be used, because it can't keep the API key secret. Any host that runs Node or Docker works:
-
-| Host | How |
+| Variable | Purpose |
 |---|---|
-| **Render** | New → Web Service → this repo. Build: *(none)*. Start: `npm start`. Add the env vars. |
-| **Railway** | New project → deploy from GitHub repo. Add the env vars. |
-| **Fly.io** | `fly launch` (uses the Dockerfile), then `fly secrets set GEMINI_API_KEY=...` |
-| **Any VPS** | `docker build -t keepsake . && docker run -p 3000:3000 -e GEMINI_API_KEY=... keepsake`, behind HTTPS (Caddy/nginx) |
+| `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` | Free first AI engine |
+| `FLUX_ENDPOINT_URL`, `FLUX_API_TOKEN` | FLUX on Modal (second engine) |
+| `UPSCALE_ENDPOINT_URL` | Optional upscaler for sharper prints |
+| `IMAGE_PROVIDERS` | Engine order, e.g. `cloudflare,flux` (default: every engine with credentials, free first) |
+| `ADMIN_PASSWORD` | Turns on `/admin` |
+| `STUDIO_OPEN`, `DAILY_PORTRAIT_CAP`, `MAX_CONCURRENT`, `RATE_LIMIT_PER_HOUR` | Limits (also changeable on the admin page) |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `GOOGLE_DRIVE_FOLDER_ID` | Drive uploads, off until all four are set |
+| `GEMINI_API_KEY` | Optional paid backup (add `gemini` to `IMAGE_PROVIDERS`) |
+| `TRUST_PROXY=true` | On Render/Railway/Fly, so limits see guests' real addresses |
+| `ALLOWED_ORIGIN` | Only accept requests from your own site |
 
-Environment variables (see `.env.example`):
-
-| Variable | Required | Default | Purpose |
-|---|---|---|---|
-| `IMAGE_PROVIDERS` | | engines with credentials, free first | Engines tried in order, e.g. `cloudflare,flux` |
-| `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` | | | Free Cloudflare Workers AI engine |
-| `STUDIO_OPEN` | | `true` | `false` = on-phone watercolour only |
-| `DAILY_PORTRAIT_CAP` | | `600` | AI portraits per day across all guests |
-| `MAX_CONCURRENT` | | `4` | Portraits painted at once; others queue |
-| `FLUX_ENDPOINT_URL` | ✅ (flux) | | Modal `generate` endpoint URL |
-| `FLUX_API_TOKEN` | ✅ (flux) | | Shared secret, same as the Modal `keepsake-flux-auth` secret |
-| `GEMINI_API_KEY` | ✅ (gemini) | | Gemini key, for Gemini mode or the backup |
-| `GEMINI_IMAGE_MODEL` | | `gemini-3.1-flash-image` | Model for both steps |
-| `ALLOWED_ORIGIN` | | | e.g. `https://keepsake.example.com`; blocks other sites using your server |
-| `RATE_LIMIT_PER_HOUR` | | `15` | Portraits per guest IP per hour |
-| `TRUST_PROXY` | | `false` | Set `true` on Render/Railway/Fly so rate limits see real guest IPs |
-| `UPSCALE_ENDPOINT_URL` | | | Modal Real-ESRGAN upscaler for small paintings |
-| `ADMIN_PASSWORD` | | | Turns on the admin page at `/admin` |
-| `GOOGLE_CLIENT_ID` / `_SECRET` / `_REFRESH_TOKEN` / `GOOGLE_DRIVE_FOLDER_ID` | | | Google Drive uploads (off until all four set) |
-| `SETTINGS_FILE` | | `data/settings.json` | Where admin-page settings are saved |
-| `PORT` | | `3000` | |
-
-Check it's set up: `GET /api/health` returns `{"ok":true,"configured":true}`.
+`GET /api/health` shows which engines are set up. The site also runs anywhere Node or Docker runs (`Dockerfile` included); GitHub Pages can't be used because it can't keep keys secret.
 
 ## Project layout
 
@@ -111,16 +94,18 @@ test/
 ## Testing
 
 ```bash
-npm test                         # 74 server, admin, Drive, styles, upscaler, translation & layout tests
+npm test                         # 74 website tests, no keys needed
 python -m pytest flux-service    # 11 AI service tests
-python3 test/e2e/run_e2e.py      # full guest journey in Chrome (needs Playwright + Pillow)
+python3 test/e2e/run_e2e.py      # whole guest journey in Chrome with fake AI engines (needs Playwright, Pillow, OpenCV)
 ```
 
-The browser test covers: phone "Take a Photo" opening the native camera on the first tap, photo resize, outfit notes reaching the painting prompt, canvas output, download, "Paint It Again", the error path returning to the form, and the laptop live camera.
+The browser test covers the phone camera opening on the first tap, both AI engines and the fallback to the on-phone watercolour, languages, the slider, offline use, the admin page and style lab, the QR sign (decoded), and an accessibility audit of every page.
 
 ## Before the wedding
 
-1. **Set a spending cap** in Google AI Studio / Cloud billing. The link is public.
-2. **Dry run with real outfits** (lehenga, sherwani, suits). If clothing isn't faithful enough, edit `server/gemini/prompts.js`, or try `GEMINI_IMAGE_MODEL=gemini-3-pro-image` for higher fidelity (slower and pricier).
-3. **Test on an iPhone and an Android phone**, opening the link in Safari or Chrome. In-app browsers (WhatsApp, Instagram) can block the camera.
-4. Put the link on a QR code at the venue.
+1. **Spending limit of $30 on Modal** (SETUP.md step 3), so nothing can ever charge you.
+2. **Real-outfit test:** style lab with lehengas, sarees, sherwanis, suits and a group shot.
+3. **Native speaker** checks `public/js/i18n/strings.js` (Gujarati and Hindi).
+4. **Real phones:** an iPhone and an Android, opening the link in Safari or Chrome (in-app browsers like WhatsApp can block the camera).
+5. Set the real date (admin page or `public/js/config.js`), add your frame and monogram (`public/frames/README.md`), print the QR sign.
+6. On the day: SETUP.md → Wedding day.
