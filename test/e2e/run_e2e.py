@@ -103,6 +103,14 @@ class FakeGemini(BaseHTTPRequestHandler):
         self.wfile.write(payload)
 
 
+A11Y_AUDIT = (Path(__file__).parent / "a11y_audit.js").read_text()
+
+
+def audit(page, where):
+    problems = page.evaluate(A11Y_AUDIT)
+    assert not problems, f"Accessibility problems on {where}:\n  " + "\n  ".join(problems)
+
+
 def main():
     gemini_port, app_port = free_port(), free_port()
     mock = ThreadingHTTPServer(("127.0.0.1", gemini_port), FakeGemini)
@@ -147,6 +155,7 @@ def main():
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.goto(base)
             page.screenshot(path=OUT / "1-welcome.png")
+            audit(page, "welcome")
 
             # Language switch: Gujarati, remembered after reload, then back to English
             page.click("[data-lang=gu]")
@@ -155,6 +164,7 @@ def main():
             expect(page.locator("#step1 h2")).to_have_text("તમારું વોટરકલર લગ્ન પોટ્રેટ બનાવો")
             assert page.get_attribute("html", "lang") == "gu"
             page.screenshot(path=OUT / "1b-gujarati.png")
+            audit(page, "welcome (Gujarati)")
             page.click("[data-lang=en]")
             expect(page.locator("#step1 h2")).to_have_text("Create Your Watercolour Wedding Portrait")
             page.click("[data-action=begin]")
@@ -176,11 +186,23 @@ def main():
             assert page.input_value("#guestMessage") == "Best night ever! ✨"
             assert page.inner_text("#charCounter").startswith("18")
             page.screenshot(path=OUT / "2-details.png", full_page=True)
+            audit(page, "details")
+            # Empty name: error is announced, the field is flagged and focused
+            page.fill("#guestName", "")
+            page.click("#submitBtn")
+            expect(page.locator("#uploadError")).to_be_visible()
+            assert page.get_attribute("#guestName", "aria-invalid") == "true"
+            assert page.evaluate("document.activeElement.id") == "guestName"
+            audit(page, "details with error")
+            page.fill("#guestName", "Maya & Arjun")
 
             page.click("#submitBtn")
             expect(page.locator("#step3")).to_be_visible()
             expect(page.locator("#step4")).to_be_visible(timeout=20000)
             page.screenshot(path=OUT / "3-result.png", full_page=True)
+            audit(page, "result")
+            assert page.evaluate("document.activeElement.textContent.trim()") == "Portrait Complete!", "focus should move to the result heading"
+            assert "Maya & Arjun" in page.get_attribute("#portraitCanvas", "aria-label")
 
             # Before/after slider shows the photo and the painting, and moves
             expect(page.locator("#compareSection")).to_be_visible()
@@ -188,6 +210,7 @@ def main():
             assert page.get_attribute("#compareAfter", "src").startswith("data:image/")
             page.locator("#compareRange").fill("20")
             assert page.evaluate("getComputedStyle(document.getElementById('compare')).getPropertyValue('--pos').trim()") == "20%"
+            assert page.get_attribute("#compareRange", "aria-valuetext") == "Showing 80% painting"
             page.locator("#compareSection").screenshot(path=OUT / "3b-slider.png")
 
             # Photo was resized before upload, and the outfit notes reached the painting prompt.
@@ -251,6 +274,10 @@ def main():
             lp.click("#photoSelectionButtons [data-action=take-photo]")
             expect(lp.locator("#cameraModal")).to_be_visible(timeout=5000)
             lp.wait_for_function("() => document.getElementById('cameraVideo').videoWidth > 0")
+            assert lp.evaluate("document.activeElement.classList.contains('shutter')"), "focus should move into the camera window"
+            for _ in range(4):
+                lp.keyboard.press("Tab")
+            assert lp.evaluate("!!document.activeElement.closest('#cameraModal')"), "Tab should stay inside the camera window"
             lp.screenshot(path=OUT / "5-laptop-camera.png")
             lp.click("[data-action=capture]")
             expect(lp.locator("#cameraModal")).to_be_hidden()
@@ -325,6 +352,7 @@ def main():
                 ap.fill("#password", "e2e-pass")
                 ap.click("#loginForm button")
                 expect(ap.locator("#dash")).to_be_visible()
+                audit(ap, "admin")
                 expect(ap.locator("#enginesBody tr")).to_have_count(2)
                 expect(ap.locator("#driveStatus")).to_contain_text("Not connected yet")
 
@@ -383,6 +411,7 @@ def main():
                 sp = sctx.new_page()
                 sp.goto(f"{site}/sign/")
                 expect(sp.locator(".qr svg")).to_have_count(1)
+                audit(sp, "QR sign")
                 sp.screenshot(path=OUT / "9-sign.png", full_page=True)
                 qr_png = sp.locator(".qr").first.screenshot()
                 import numpy as np, cv2

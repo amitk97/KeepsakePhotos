@@ -4,6 +4,22 @@ import { $ } from "./ui.js";
 
 let stream = null;
 let facing = "user";
+let returnFocusTo = null;
+
+// Keeps Tab inside the camera window while it's open.
+function trapFocus(e) {
+  if (e.key !== "Tab") return;
+  const items = [...$("cameraModal").querySelectorAll("button")];
+  const first = items[0];
+  const last = items.at(-1);
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
 
 export function isTouchDevice() {
   return (
@@ -32,7 +48,13 @@ export async function openLiveCamera() {
   const video = $("cameraVideo");
   video.srcObject = stream;
   video.classList.toggle("mirror-video", facing === "user");
-  $("cameraModal").classList.remove("hidden");
+  const modal = $("cameraModal");
+  if (modal.classList.contains("hidden")) {
+    returnFocusTo = document.activeElement;
+    modal.addEventListener("keydown", trapFocus);
+  }
+  modal.classList.remove("hidden");
+  modal.querySelector(".shutter").focus();
   await video.play();
 }
 
@@ -49,7 +71,12 @@ function stopTracks() {
 export function closeLiveCamera() {
   stopTracks();
   $("cameraVideo").srcObject = null;
-  $("cameraModal").classList.add("hidden");
+  const modal = $("cameraModal");
+  const wasOpen = !modal.classList.contains("hidden");
+  modal.classList.add("hidden");
+  modal.removeEventListener("keydown", trapFocus);
+  if (wasOpen && returnFocusTo?.isConnected) returnFocusTo.focus();
+  returnFocusTo = null;
 }
 
 // Returns a canvas with the 3:4 area the guest saw, un-mirrored for the selfie camera.

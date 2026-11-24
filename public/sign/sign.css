@@ -26,7 +26,7 @@ body { margin: 0; background: #ddd; color: var(--green); font-family: var(--sans
 #sheet.card .frame { border-width: 1.2mm; outline-width: 0.6mm; outline-offset: -2.5mm; padding: 6mm 4mm; }
 
 .names { font-family: var(--serif); font-weight: 700; font-size: 34pt; margin: 0; }
-.venue { font-size: 11pt; letter-spacing: 0.18em; color: var(--gold); font-weight: 600; margin: 4mm 0 10mm; }
+.venue { font-size: 11pt; letter-spacing: 0.18em; color: #7d6229; font-weight: 600; margin: 4mm 0 10mm; }
 h1 { font-family: var(--serif); font-size: 30pt; margin: 0; }
 .lines { display: flex; flex-direction: column; gap: 1.5mm; margin: 3mm 0 0; font-family: var(--serif); font-weight: 600; font-size: 18pt; }
 .lines.small { font-size: 12pt; font-family: var(--sans); font-weight: 500; }

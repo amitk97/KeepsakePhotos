@@ -6,9 +6,12 @@ export const $ = (id) => document.getElementById(id);
 
 const STEPS = ["step1", "step2", "step3", "step4"];
 
-export function goToStep(n) {
+// focus: move keyboard and screen-reader focus to the new step's heading, so it's announced.
+export function goToStep(n, { focus = true } = {}) {
   STEPS.forEach((id, i) => $(id).classList.toggle("hidden", i !== n - 1));
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+  if (focus) $(STEPS[n - 1]).querySelector("h2")?.focus({ preventScroll: true });
 }
 
 export function currentStep() {
@@ -44,7 +47,18 @@ export function clearPhotoPreview() {
 }
 
 export function updateCharCounter(max) {
-  $("charCounter").textContent = `${$("guestMessage").value.length} / ${max}`;
+  const used = $("guestMessage").value.length;
+  $("charCounter").textContent = `${used} / ${max}`;
+  $("charCounterSr").textContent = t("charsLeft", max - used);
+}
+
+// Marks a field as wrong for screen readers and puts the cursor in it.
+export function flagField(id) {
+  const el = $(id);
+  el.setAttribute("aria-invalid", "true");
+  el.setAttribute("aria-errormessage", "uploadErrorText");
+  el.focus();
+  el.addEventListener("input", () => el.removeAttribute("aria-invalid"), { once: true });
 }
 
 export function renderSuggestionChips(messages, onPick) {

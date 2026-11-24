@@ -18,7 +18,7 @@ import { canShareFiles, downloadPortrait, sharePortrait } from "./share.js";
 const { $ } = ui;
 
 function goToStep(n) {
-  ui.goToStep(n);
+  ui.goToStep(n, { focus: ui.currentStep() !== n });
   saveDraft({ step: n });
 }
 
@@ -83,7 +83,10 @@ async function onSubmit(event) {
 
   const name = $("guestName").value.trim();
   const message = $("guestMessage").value.trim();
-  if (!name) return ui.showError(t("errName"));
+  if (!name) {
+    ui.showError(t("errName"));
+    return ui.flagField("guestName");
+  }
   if (!state.photoBase64) return ui.showError(t("errPhoto"));
 
   state.guestName = name;
@@ -134,6 +137,7 @@ async function generate() {
     await waitForFonts(`${nameLine} ${state.guestMessage}`);
     const { frame, monogram } = getDesign();
     composePortrait($("portraitCanvas"), { image, guestName: state.guestName, message: state.guestMessage, nameLine, frame, monogram });
+    $("portraitCanvas").setAttribute("aria-label", t("keepsakeAlt", state.guestName, state.guestMessage));
     showCompare(state.photoDataUrl, artUrl);
     sendKeepsakeToHosts($("portraitCanvas"), state.guestName);
     ui.setQuickNote(quick);
@@ -211,7 +215,10 @@ function init() {
       saveDraft({ message: msg });
     });
   renderChips();
-  onLangChange(renderChips);
+  onLangChange(() => {
+    renderChips();
+    ui.updateCharCounter(SETTINGS.maxMessageLength);
+  });
   applyTranslations();
   loadSiteSettings().then(() => {
     applyTranslations();
@@ -234,7 +241,7 @@ function init() {
   msgEl.value = draft.message;
   ui.updateCharCounter(SETTINGS.maxMessageLength);
   // The photo isn't kept between reloads, so only ever resume at the details step.
-  if (draft.step >= 2) ui.goToStep(2);
+  if (draft.step >= 2) ui.goToStep(2, { focus: false });
 }
 
 init();
