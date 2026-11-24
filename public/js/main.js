@@ -1,4 +1,5 @@
-// Starts the guest page. Buttons in index.html say what they do with data-action="…";
+// Starts the guest page. Buttons in index.html say what they do with data-action="…"
+// (the photo buttons are labels, wired in flows/photoInput.js);
 // this table maps each one to a function. The work itself lives in flows/.
 
 import { applyTranslations, setLang } from "./i18n/index.js";
@@ -17,8 +18,6 @@ import { initForm, renderChips, resetApp } from "./flows/form.js";
 const actions = {
   begin: () => goToStep(2),
   lang: (el) => setLang(el.dataset.lang),
-  "take-photo": photo.takePhoto,
-  "choose-photo": photo.chooseFromLibrary,
   "flip-camera": photo.flipCamera,
   "close-camera": photo.closeCamera,
   capture: photo.capturePhoto,
@@ -39,8 +38,7 @@ document.addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeLiveCamera();
 });
-$("fileInput").addEventListener("change", photo.onFileChosen);
-$("nativeCameraInput").addEventListener("change", photo.onFileChosen);
+photo.initPhotoButtons();
 
 initForm();
 applyTranslations();

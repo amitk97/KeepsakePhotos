@@ -184,11 +184,16 @@ def main():
 
             # "Take a Photo" on a phone must open the native camera input on the first tap.
             with page.expect_file_chooser(timeout=3000) as fc:
-                page.click("#photoSelectionButtons [data-action=take-photo]")
+                page.click("#photoSelectionButtons [data-photo=camera]")
             chooser = fc.value
             capture = chooser.element.get_attribute("capture")
             assert chooser.element.get_attribute("id") == "nativeCameraInput", "camera tap didn't open the camera input"
             assert capture == "environment", f"capture attribute was {capture}"
+            # "Choose Photo" opens the gallery picker (no camera capture) the same native way.
+            with page.expect_file_chooser(timeout=3000) as fc2:
+                page.click("#photoSelectionButtons [data-photo=library]")
+            assert fc2.value.element.get_attribute("id") == "fileInput"
+            assert fc2.value.element.get_attribute("capture") is None
             chooser.set_files(str(photo))
             expect(page.locator("#photoPreviewContainer")).to_be_visible()
             expect(page.locator("#submitBtn")).to_be_enabled()
@@ -283,7 +288,7 @@ def main():
             lp = laptop.new_page()
             lp.goto(base)
             lp.click("[data-action=begin]")
-            lp.click("#photoSelectionButtons [data-action=take-photo]")
+            lp.click("#photoSelectionButtons [data-photo=camera]")
             expect(lp.locator("#cameraModal")).to_be_visible(timeout=5000)
             lp.wait_for_function("() => document.getElementById('cameraVideo').videoWidth > 0")
             assert lp.evaluate("document.activeElement.classList.contains('shutter')"), "focus should move into the camera window"

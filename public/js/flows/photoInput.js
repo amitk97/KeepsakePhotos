@@ -15,20 +15,35 @@ function setPhoto({ dataUrl, base64, smallBase64 }) {
   ui.showPhotoPreview(dataUrl);
 }
 
-// Phones: opens the camera app. Laptops: opens the live preview.
-export function takePhoto() {
+// The photo buttons are <label>s for the file inputs, so a tap opens the phone's camera or gallery
+// natively. On laptops with a webcam, "Take a Photo" opens the live preview instead.
+function onPhotoButton(event) {
+  const label = event.currentTarget;
   ui.hideError();
   saveDraft({ step: 2 });
-  // Must stay synchronous so the browser treats it as part of the tap.
-  if (camera.isTouchDevice() || !camera.canUseLiveCamera()) {
-    camera.openNativeCamera();
-    return;
-  }
+  if (label.dataset.photo !== "camera" || camera.isTouchDevice() || !camera.canUseLiveCamera()) return; // let the label open the picker
+  event.preventDefault();
   camera.openLiveCamera().catch((err) => {
     console.warn("Live camera unavailable:", err);
     camera.closeLiveCamera();
-    ui.showError(t("errCamera"));
+    ui.$("nativeCameraInput").click(); // fall back to the file picker
   });
+}
+
+// Labels aren't keyboard buttons by default: Enter and Space open them too.
+function onPhotoKey(event) {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  event.currentTarget.click();
+}
+
+export function initPhotoButtons() {
+  for (const label of document.querySelectorAll("label[data-photo]")) {
+    label.addEventListener("click", onPhotoButton);
+    label.addEventListener("keydown", onPhotoKey);
+  }
+  ui.$("fileInput").addEventListener("change", onFileChosen);
+  ui.$("nativeCameraInput").addEventListener("change", onFileChosen);
 }
 
 // Shutter button on the laptop preview.
@@ -48,7 +63,6 @@ export function flipCamera() {
 }
 
 export const closeCamera = () => camera.closeLiveCamera();
-export const chooseFromLibrary = () => ui.$("fileInput").click();
 
 // A photo arrived from the camera app or the library.
 export async function onFileChosen(event) {
