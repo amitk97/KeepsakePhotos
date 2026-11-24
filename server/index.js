@@ -13,11 +13,8 @@ server.headersTimeout = 60_000;
 
 server.listen(config.port, config.host, () => {
   console.log(`Keepsake studio running on http://localhost:${config.port}`);
-  console.log(`Image provider: ${config.imageProvider}${config.imageFallback ? ` (backup: ${config.imageFallback})` : ""}`);
-  if (config.imageProvider === "flux" && !(config.fluxEndpointUrl && config.fluxApiToken))
-    console.warn("Warning: FLUX_ENDPOINT_URL / FLUX_API_TOKEN not set, so portraits will fail.");
-  if (config.imageProvider === "gemini" && !config.geminiApiKey)
-    console.warn("Warning: GEMINI_API_KEY is not set, so portraits will fail.");
+  console.log(`Image engines, in order: ${config.imageProviders.join(" → ")} → on-phone watercolour`);
+  if (!config.studioOpen) console.warn("STUDIO_OPEN=false: guests get the on-phone watercolour only.");
 });
 
 for (const signal of ["SIGINT", "SIGTERM"]) {

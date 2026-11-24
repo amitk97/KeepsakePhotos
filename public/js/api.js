@@ -1,32 +1,51 @@
-// Talks to our own server, which holds the Gemini API key.
+// Talks to our own server, which holds all the AI keys.
 
 import { SETTINGS } from "./config.js";
 
-export async function requestCaricature(photoBase64) {
+// error.useFilter = true means: no AI artist is free, paint the on-phone watercolour instead.
+function fail(message, { useFilter = false, status = 0 } = {}) {
+  const err = new Error(message);
+  err.useFilter = useFilter;
+  err.status = status;
+  return err;
+}
+
+export function newRequestId() {
+  return crypto.randomUUID ? crypto.randomUUID() : `r-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export async function requestCaricature({ photoBase64, smallPhotoBase64, requestId }) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), SETTINGS.requestTimeoutMs);
 
   try {
     const res = await fetch(SETTINGS.apiEndpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: photoBase64, mimeType: "image/jpeg" }),
+      headers: { "Content-Type": "application/json", "X-Request-Id": requestId },
+      body: JSON.stringify({ image: photoBase64, smallImage: smallPhotoBase64, mimeType: "image/jpeg" }),
       signal: controller.signal,
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok || typeof data.image !== "string") {
-      throw new Error(data.error || "The art studio didn't return a portrait. Please try again.");
-    }
-    return data.image;
+    if (res.ok && typeof data.image === "string") return data;
+
+    // Guest mistakes (bad photo, too many portraits) are shown on the form, not painted around.
+    const guestProblem = res.status === 400 || res.status === 413 || res.status === 429 || res.status === 403;
+    throw fail(data.error || "The art studio didn't return a portrait.", { useFilter: !guestProblem, status: res.status });
   } catch (err) {
-    if (err.name === "AbortError") {
-      throw new Error("This is taking too long. Please check your connection and try again.");
-    }
-    if (err instanceof TypeError) {
-      throw new Error("No connection to the art studio. Please check your internet and try again.");
-    }
+    if (err.name === "AbortError") throw fail("This is taking too long.", { useFilter: true });
+    if (err instanceof TypeError) throw fail("No connection to the art studio.", { useFilter: true });
     throw err;
   } finally {
     clearTimeout(timer);
+  }
+}
+
+// { position: 0 = painting now, 1 = next, …, -1 = unknown }
+export async function fetchQueuePosition(requestId) {
+  try {
+    const res = await fetch(`/api/queue?id=${encodeURIComponent(requestId)}`, { cache: "no-store" });
+    return res.ok ? await res.json() : { position: -1 };
+  } catch {
+    return { position: -1 };
   }
 }

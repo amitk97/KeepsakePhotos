@@ -18,7 +18,7 @@
     <header class="site-header">
         <div class="badge">Wedding Keepsake Studio</div>
         <h1 class="couple">Pooja &amp; Amit</h1>
-        <p class="eyebrow">Somerset Estate • October 24, 2026</p>
+        <p class="eyebrow">Somerset Estate • April 2028</p>
     </header>
 
     <main>
@@ -26,9 +26,9 @@
         <section id="step1" class="card glow">
             <div class="monogram" aria-hidden="true">P&amp;A</div>
             <div>
-                <span class="eyebrow">Hand-Drawn Caricature Portrait</span>
-                <h2>Create Your Hand-Sketched Wedding Portrait</h2>
-                <p class="lead">Take a photo or upload a picture of yourself to receive a custom watercolour &amp; ink caricature keepsake, outfit and all, complete with your personalised message for Pooja &amp; Amit.</p>
+                <span class="eyebrow">Watercolour Caricature Portrait</span>
+                <h2>Create Your Watercolour Wedding Portrait</h2>
+                <p class="lead">Take a photo or upload a picture of yourself to receive a custom watercolour caricature keepsake, outfit and all, complete with your personalised message for Pooja &amp; Amit.</p>
             </div>
             <button type="button" class="btn btn-primary btn-large" data-action="begin">
                 <span>Begin Your Portrait</span>
@@ -134,8 +134,9 @@
             </div>
             <div>
                 <span class="eyebrow">Artist at Work</span>
-                <h2>Sketching Your Portrait…</h2>
+                <h2>Painting Your Portrait…</h2>
                 <p id="processingSubtitle" class="lead pulse">Studying your outfit…</p>
+                <p id="queueStatus" class="queue hidden" aria-live="polite"></p>
             </div>
             <div class="aside">This usually takes 20–40 seconds. Please keep this page open.</div>
         </section>
@@ -146,6 +147,7 @@
                 <span class="eyebrow">Your Wedding Keepsake</span>
                 <h2>Portrait Complete!</h2>
             </div>
+            <p id="quickNote" class="note hidden">Our AI artists were busy, so this quick watercolour was painted on your phone. Tap "Paint It Again" in a few minutes to try the AI artist.</p>
             <div class="portrait">
                 <canvas id="portraitCanvas" width="1200" height="1800" role="img" aria-label="Your wedding caricature keepsake"></canvas>
             </div>
@@ -162,7 +164,7 @@
     </main>
 
     <footer class="site-footer">
-        <p>© 2026 Pooja &amp; Amit Wedding. Designed with love.</p>
+        <p>Pooja &amp; Amit Wedding. Designed with love.</p>
     </footer>
 </body>
 </html>

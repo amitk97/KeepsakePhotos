@@ -78,6 +78,13 @@ export function toResizedJpeg(source, maxEdge = SETTINGS.maxPhotoEdge, quality =
   return { dataUrl, base64: dataUrl.split(",")[1] };
 }
 
+// The full photo for the AI, plus a small copy for engines that need one.
+export function preparePhoto(source) {
+  const full = toResizedJpeg(source);
+  const small = toResizedJpeg(source, SETTINGS.smallPhotoEdge, 0.88);
+  return { dataUrl: full.dataUrl, base64: full.base64, smallBase64: small.base64 };
+}
+
 export async function processFile(file) {
   validateFile(file);
   let img;
@@ -86,5 +93,5 @@ export async function processFile(file) {
   } catch {
     throw new PhotoError("We couldn't read that photo. Please try a different one.");
   }
-  return toResizedJpeg(img);
+  return preparePhoto(img);
 }

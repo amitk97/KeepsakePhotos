@@ -1,10 +1,26 @@
-// Picks the image provider from config, with an optional automatic backup.
+// Builds the chain of image engines from config. Each engine is tried in order; when one is out of
+// its free allowance, broken or slow, the next one takes over automatically.
 
+import { createCloudflareProvider } from "./cloudflare.js";
 import { createFluxProvider } from "./flux.js";
 import { createGeminiProvider } from "./gemini.js";
-import { NoImageError } from "./errors.js";
+import { createChain } from "./chain.js";
+
+export const PROVIDER_NAMES = ["cloudflare", "flux", "gemini"];
 
 export function buildProvider(name, config, { logger, geminiClient, fetchImpl } = {}) {
+  if (name === "cloudflare") {
+    return createCloudflareProvider({
+      accountId: config.cloudflareAccountId,
+      apiToken: config.cloudflareApiToken,
+      model: config.cloudflareModel,
+      apiBase: config.cloudflareApiBase,
+      timeoutMs: config.cloudflareTimeoutMs,
+      dailyNeuronBudget: config.cloudflareDailyNeurons,
+      fetchImpl,
+      logger,
+    });
+  }
   if (name === "flux") {
     return createFluxProvider({
       endpointUrl: config.fluxEndpointUrl,
@@ -25,32 +41,10 @@ export function buildProvider(name, config, { logger, geminiClient, fetchImpl } 
       logger,
     });
   }
-  throw new Error(`Unknown IMAGE_PROVIDER "${name}" (use flux or gemini)`);
-}
-
-// Tries the main provider; if it fails for a technical reason, tries the backup.
-// A rejected photo (NoImageError) isn't retried elsewhere: it would likely fail again.
-export function withFallback(primary, backup, logger = console) {
-  if (!backup?.configured) return primary;
-  return {
-    name: `${primary.name}+${backup.name}`,
-    configured: primary.configured || backup.configured,
-    async createCaricature(input) {
-      if (!primary.configured) return backup.createCaricature(input);
-      try {
-        return await primary.createCaricature(input);
-      } catch (err) {
-        if (err instanceof NoImageError) throw err;
-        logger.warn(`${primary.name} failed (${err.message}); using ${backup.name}`);
-        return backup.createCaricature(input);
-      }
-    },
-  };
+  throw new Error(`Unknown image engine "${name}" (use ${PROVIDER_NAMES.join(", ")})`);
 }
 
 export function createImageProvider(config, deps = {}) {
-  const primary = buildProvider(config.imageProvider, config, deps);
-  const backupName = config.imageFallback;
-  if (!backupName || backupName === config.imageProvider) return primary;
-  return withFallback(primary, buildProvider(backupName, config, deps), deps.logger);
+  const providers = config.imageProviders.map((name) => buildProvider(name, config, deps));
+  return createChain(providers, { logger: deps.logger, cooldownMs: config.engineCooldownMs });
 }

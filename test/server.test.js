@@ -101,13 +101,13 @@ describe("generate error handling", () => {
     assert.equal(res.status, 200);
   });
 
-  test("returns a friendly 422 when no image comes back", async () => {
+  test("tells the phone to paint its own watercolour when no image comes back", async () => {
     const gemini = fakeGemini(() => ({ candidates: [{ finishReason: "SAFETY", content: { parts: [] } }] }));
     const { server, url } = await startServer(createApp(cfg, { gemini, logger: quietLogger }));
     const res = await post(url, { image: PHOTO });
     server.close();
-    assert.equal(res.status, 422);
-    assert.match((await res.json()).error, /different photo/);
+    assert.equal(res.status, 503);
+    assert.equal((await res.json()).fallback, "filter");
   });
 
   test("returns 503 when Gemini is rate limited", async () => {
@@ -121,11 +121,12 @@ describe("generate error handling", () => {
     assert.equal(res.status, 503);
   });
 
-  test("returns 500 with a clear message when the key is missing", async () => {
+  test("falls back to the on-phone watercolour when no engine is set up", async () => {
     const { server, url } = await startServer(createApp(loadConfig({}), { gemini: okGemini(), logger: quietLogger }));
     const res = await post(url, { image: PHOTO });
     server.close();
-    assert.equal(res.status, 500);
+    assert.equal(res.status, 503);
+    assert.equal((await res.json()).reason, "not-configured");
   });
 
   test("blocks other websites when ALLOWED_ORIGIN is set", async () => {
@@ -172,7 +173,10 @@ describe("static files", () => {
 
   test("health check reports configuration", async () => {
     const res = await fetch(`${ctx.url}/api/health`);
-    assert.deepEqual(await res.json(), { ok: true, provider: "gemini", configured: true });
+    const h = await res.json();
+    assert.equal(h.ok, true);
+    assert.equal(h.configured, true);
+    assert.equal(h.engines[0].name, "gemini");
   });
 });
 

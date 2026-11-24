@@ -13,7 +13,7 @@ export const DESCRIBE_OUTFIT_PROMPT = [
 
 export function buildCaricaturePrompt(outfitNotes = "") {
   const sections = [
-    "Create a charming, flattering hand-drawn watercolour and ink wedding caricature of the person or people in the reference photo.",
+    "Create a charming, flattering soft watercolour caricature painting of the person or people in the reference photo.",
 
     "LIKENESS: keep each person clearly recognisable: face shape, skin tone, hairstyle, facial hair, glasses and warm expression. " +
       "Caricature exaggeration applies ONLY to the head (slightly larger head, playful expression). Bodies keep natural proportions.",
@@ -22,6 +22,7 @@ export function buildCaricaturePrompt(outfitNotes = "") {
       "the same colours, the same fabrics and their textures and sheen, the same patterns, embroidery, beadwork and borders, " +
       "the same cut, silhouette, drape and way it is worn, and the same jewellery. " +
       "Do NOT simplify, restyle, recolour, modernise or swap any clothing. " +
+      "Pure watercolour only: soft wet-on-wet blends and gentle colour bleeds, no ink outlines, no pencil or sketch lines. " +
       "Show fabric texture visibly in the watercolour: the sheen of silk, the soft pile of velvet, the sparkle of sequins, " +
       "the fine detail of embroidery and zari work.",
 

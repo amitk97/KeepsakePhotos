@@ -52,6 +52,27 @@ class FakeGemini(BaseHTTPRequestHandler):
         pass
 
     def do_POST(self):
+        if self.path.startswith("/cf/accounts/"):
+            from email.parser import BytesParser
+            from email.policy import default as email_default
+            raw = self.rfile.read(int(self.headers["Content-Length"]))
+            msg = BytesParser(policy=email_default).parsebytes(
+                b"Content-Type: " + self.headers["Content-Type"].encode() + b"\r\n\r\n" + raw)
+            fields = {p.get_param("name", header="content-disposition"): p.get_payload(decode=True) for p in msg.iter_parts()}
+            small = Image.open(io.BytesIO(fields["input_image_0"]))
+            FakeGemini.requests.append({"path": "/cf", "auth": self.headers.get("Authorization"),
+                                        "prompt": fields["prompt"].decode(), "small": small.size})
+            if FakeGemini.mode == "fail":
+                self.send_response(500)
+                self.end_headers()
+                return
+            payload = json.dumps({"success": True, "result": {"image": FAKE_ART}}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+            return
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         if self.path == "/flux":
             FakeGemini.requests.append({"path": "/flux", "auth": self.headers.get("Authorization"), "body": body})
@@ -92,6 +113,7 @@ def main():
         "PORT": str(app_port),
         "HOST": "127.0.0.1",
         "GEMINI_API_KEY": "fake-key",
+        "ENGINE_COOLDOWN_MS": "1",
         "GEMINI_API_BASE": f"http://127.0.0.1:{gemini_port}/v1beta/models",
     }
     server = subprocess.Popen(["node", "server/index.js"], cwd=ROOT, env=env)
@@ -179,19 +201,19 @@ def main():
             expect(page.locator("#step4")).to_be_visible(timeout=20000)
             assert len(FakeGemini.requests) == before + 2
 
-            # ---- Failure goes back to the form with a clear message (no stuck spinner) ----
+            # ---- Every AI engine down: the phone paints a free watercolour itself (no stuck spinner) ----
             FakeGemini.mode = "fail"
             page.click("[data-action=regenerate]")
-            expect(page.locator("#uploadError")).to_be_visible(timeout=20000)
-            expect(page.locator("#step2")).to_be_visible()
-            print("Error shown:", page.inner_text("#uploadErrorText"))
-            page.screenshot(path=OUT / "4-error.png", full_page=True)
+            expect(page.locator("#step4")).to_be_visible(timeout=30000)
+            expect(page.locator("#quickNote")).to_be_visible()
+            page.screenshot(path=OUT / "4-quick-watercolour.png", full_page=True)
             FakeGemini.mode = "ok"
 
             # ---- Reset ----
             FakeGemini.mode = "ok"
-            page.click("#submitBtn")
+            page.click("[data-action=regenerate]")
             expect(page.locator("#step4")).to_be_visible(timeout=20000)
+            expect(page.locator("#quickNote")).to_be_hidden()
             page.click("[data-action=reset]")
             expect(page.locator("#step1")).to_be_visible()
             page.click("[data-action=begin]")
@@ -221,7 +243,9 @@ def main():
             # ---- FLUX mode: same guest journey, painted by the (fake) Modal service ----
             flux_port = free_port()
             flux_env = {**env, "PORT": str(flux_port), "GEMINI_API_KEY": "",
-                        "FLUX_ENDPOINT_URL": f"http://127.0.0.1:{gemini_port}/flux", "FLUX_API_TOKEN": "flux-secret"}
+                        "FLUX_ENDPOINT_URL": f"http://127.0.0.1:{gemini_port}/flux", "FLUX_API_TOKEN": "flux-secret",
+                        "CLOUDFLARE_ACCOUNT_ID": "acct", "CLOUDFLARE_API_TOKEN": "cf-secret",
+                        "CLOUDFLARE_API_BASE": f"http://127.0.0.1:{gemini_port}/cf", "IMAGE_PROVIDERS": "cloudflare,flux"}
             flux_server = subprocess.Popen(["node", "server/index.js"], cwd=ROOT, env=flux_env)
             try:
                 for _ in range(50):
@@ -234,16 +258,19 @@ def main():
                 fp = fctx.new_page()
                 fp.goto(f"http://127.0.0.1:{flux_port}")
                 health = fp.evaluate("() => fetch('/api/health').then(r => r.json())")
-                assert health == {"ok": True, "provider": "flux", "configured": True}, health
+                assert [e["name"] for e in health["engines"]] == ["cloudflare", "flux"], health
                 fp.click("[data-action=begin]")
                 fp.set_input_files("#fileInput", str(photo))
                 expect(fp.locator("#submitBtn")).to_be_enabled()
                 fp.fill("#guestName", "Flux Guest")
                 fp.click("#submitBtn")
                 expect(fp.locator("#step4")).to_be_visible(timeout=20000)
-                flux_req = [r for r in FakeGemini.requests if r["path"] == "/flux"][-1]
-                assert flux_req["auth"] == "Bearer flux-secret"
-                assert len(flux_req["body"]["image"]) > 1000
+                expect(fp.locator("#quickNote")).to_be_hidden()
+                cf_req = [r for r in FakeGemini.requests if r["path"] == "/cf"][-1]
+                assert cf_req["auth"] == "Bearer cf-secret"
+                assert max(cf_req["small"]) < 512, cf_req["small"]
+                assert "watercolour" in cf_req["prompt"].lower()
+                assert not [r for r in FakeGemini.requests if r["path"] == "/flux"], "FLUX used while Cloudflare was free"
                 fp.screenshot(path=OUT / "6-flux-result.png", full_page=True)
                 fctx.close()
             finally:
