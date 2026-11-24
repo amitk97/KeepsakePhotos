@@ -9,7 +9,7 @@ A wedding keepsake studio for **Pooja & Amit** (April 2028). Guests scan a QR co
 - English, Gujarati and Hindi; before/after slider; works with no signal once opened; add to home screen.
 - Hosts' admin page: live status, studio on/off, wording and limits, style lab, wedding-day test, printable QR sign.
 - Google Drive upload of finished keepsakes (off until connected).
-- Accessible (WCAG 2.2 AA checks in the browser test); no build step; no npm dependencies.
+- Accessible (WCAG 2.2 AA checks in the browser test); fonts hosted with the site; no build step; no npm dependencies.
 
 ## Run it on your computer
 
@@ -38,70 +38,38 @@ All in environment variables (Render → Environment, or `.env` locally). See `.
 | `MAX_CONCURRENT`, `MAX_WAITING` | Painted at once; most in line before guests get the on-phone watercolour |
 | `RATE_LIMIT_PER_HOUR`, `RATE_LIMIT_PER_IP_HOUR` | Per phone, and per internet address (generous, as venue Wi-Fi shares one) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `GOOGLE_DRIVE_FOLDER_ID` | Drive uploads, off until all four are set |
+| `SETTINGS_ENDPOINT_URL` | Keeps admin-page settings permanently (Modal settings store) |
 | `GEMINI_API_KEY` | Optional paid backup (add `gemini` to `IMAGE_PROVIDERS`) |
 | `TRUST_PROXY=true` | On Render/Railway/Fly, so limits see guests' real addresses |
 | `ALLOWED_ORIGIN` | Only accept requests from your own site |
 
 `GET /api/health` shows which engines are set up. The site also runs anywhere Node or Docker runs (`Dockerfile` included); GitHub Pages can't be used because it can't keep keys secret.
 
-## Project layout
+## Finding your way around
+
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md):** how the parts fit, with a diagram and a map of every folder.
+- **[docs/HOW-TO-CHANGE.md](docs/HOW-TO-CHANGE.md):** "I want to change X" → the exact file.
+- **[CONTRIBUTING.md](CONTRIBUTING.md):** how to make a change safely, and the house rules.
 
 ```
-server/
-  index.js            starts the HTTP server
-  app.js              routes: /api/generate, /api/health, static files
-  config.js           reads environment variables
-  routes/generate.js  validates the upload, rate-limits, returns the portrait
-  providers/          cloudflare.js, flux.js, gemini.js, chain.js (automatic switching), errors.js
-  prompts/            watercolour.js: the watercolour styles (picked in the admin style lab)
-  providers/upscaler.js  doubles small paintings via Modal Real-ESRGAN
-  lib/queue.js        place-in-line; lib/usage.js daily allowance counting
-  gemini/client.js    Gemini REST client (timeouts, retries on 429/5xx only)
-  gemini/caricature.js  describe outfit → paint caricature
-  gemini/prompts.js   ← tune the AI wording here
-  lib/                http, rate limiter, static files, settings store, admin sessions, problem log
-  routes/admin.js     admin API + wedding-day test; routes/keepsake.js Drive upload hand-off
-  drive/client.js     Google Drive uploads and settings backup (drive.file permission)
-scripts/google-drive-auth.js   one-time Drive connection
-flux-service/
-  flux_app.py         FLUX Kontext + Real-ESRGAN upscaler on Modal (memory snapshots for fast starts)
-  core.py             request checks (tested: python -m pytest flux-service)
-  smoke_test.py       checks the live service after each deploy
-.github/workflows/    deploy FLUX to Modal (button in Actions tab), run tests
-render.yaml           one-click website setup on Render
-public/
-  index.html, css/styles.css, favicon.svg
-  js/config.js        ← wedding names, date, preset messages, colours
-  js/main.js          wires buttons (data-action="...") to features
-  js/camera.js        native camera on phones, live preview on laptops
-  js/photo.js         HEIC conversion + resize to 1536px JPEG
-  js/api.js           calls /api/generate
-  js/share.js         Save to Photos / Share, download
-  js/storage.js       keeps name & message if the page reloads
-  js/ui.js, state.js
-  js/sketch/          free on-phone watercolour (last-resort backup)
-  js/i18n/            English, Gujarati, Hindi: every word guests see (strings.js)
-  js/compare.js       before/after slider
-  js/design.js        loads your own frame and monogram (see frames/README.md)
-  frames/             frame template and spec for your own artwork
-  sw.js, manifest     offline support and "add to home screen"
-  admin/              hosts' admin page
-  sign/               printable QR sign (QR library: MIT, Kazuhiko Arase)
-  js/portrait/        canvas layout (compose.js), shapes, text wrapping
-test/
-  *.test.js           unit + API tests (npm test)
-  e2e/run_e2e.py      real-browser test with a fake Gemini
+public/          the pages guests and hosts see (no build step)
+server/          small Node server: routes/, engines/ (AI), storage/, lib/
+flux-service/    FLUX painter, upscaler and settings store on Modal
+docs/            architecture and how-to guides
+test/            automated tests (+ e2e/ browser test)
 ```
 
 ## Testing
 
 ```bash
-npm test                         # 83 website tests, no keys needed
-python -m pytest flux-service    # 11 AI service tests
-python3 test/e2e/run_e2e.py      # whole guest journey in Chrome with fake AI engines (needs Playwright, Pillow, OpenCV)
+npm run check          # every JavaScript file parses
+npm test               # 87 server, engine, storage, translation and import-matching tests
+npm run test:ai        # 14 tests for the Modal service, including loading it the way a deploy does
+npm run test:browser   # whole guest journey in Chrome with fake AI engines (needs Playwright, Pillow, OpenCV)
+npm run test:all       # everything
 ```
 
-The browser test covers the phone camera opening on the first tap, both AI engines and the fallback to the on-phone watercolour, languages, the slider, offline use, the admin page and style lab, the QR sign (decoded), an accessibility audit of every page, and checks nothing is blocked by the security policy.
+The browser test covers the phone camera, both AI engines and the on-phone fallback, languages, the slider, offline use, the admin page and style lab, the QR sign (decoded), an accessibility audit of every page, and that the security policy blocks nothing.
 
 ## Before the wedding
 

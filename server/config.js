@@ -67,6 +67,8 @@ export function loadConfig(env = process.env) {
     adminPassword: env.ADMIN_PASSWORD || "",
     // Where admin-page settings are saved. Empty = memory only.
     settingsFile: env.SETTINGS_FILE ?? "data/settings.json",
+    // Permanent settings store on Modal (flux-service `settings` endpoint). Optional.
+    settingsEndpointUrl: env.SETTINGS_ENDPOINT_URL || "",
 
     // Google Drive uploads of finished keepsakes. Off until all four are set (see SETUP.md).
     googleClientId: env.GOOGLE_CLIENT_ID || "",

@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import http from "node:http";
 import { createApp } from "../server/app.js";
 import { loadConfig } from "../server/config.js";
-import { createFluxProvider } from "../server/providers/flux.js";
-import { createCloudflareProvider } from "../server/providers/cloudflare.js";
-import { createChain, AllEnginesUnavailableError } from "../server/providers/chain.js";
-import { NoImageError, ProviderBusyError, ProviderError } from "../server/providers/errors.js";
+import { createFluxProvider } from "../server/engines/flux.js";
+import { createCloudflareProvider } from "../server/engines/cloudflare.js";
+import { createChain, AllEnginesUnavailableError } from "../server/engines/chain.js";
+import { NoImageError, ProviderBusyError, ProviderError } from "../server/engines/errors.js";
 import { createQueue } from "../server/lib/queue.js";
 import { createDailyCounter } from "../server/lib/usage.js";
 

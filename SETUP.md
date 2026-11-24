@@ -27,6 +27,7 @@ Keep these private: never post them in chats, email or GitHub issues.
 | ⑤ | Cloudflare account ID | Step 5 | Render `CLOUDFLARE_ACCOUNT_ID` |
 | ⑥ | Cloudflare API token | Step 5 | Render `CLOUDFLARE_API_TOKEN` |
 | ⑦ | Admin password | Step 6 (you make it up, different from ②) | Render `ADMIN_PASSWORD` |
+| ⑧ | Settings store web address | Step 4 (Modal) | Render `SETTINGS_ENDPOINT_URL` |
 
 ---
 
@@ -51,9 +52,10 @@ Make a long random string, 40+ characters (e.g. <https://www.random.org/strings/
 
 1. In this repo: **Settings → Secrets and variables → Actions → New repository secret:** add `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` from step 3.4.
 2. **Actions → Deploy FLUX to Modal → Run workflow** (warm = 0). Wait for the green tick (about 5 minutes the first time).
-3. In Modal, open **Apps → keepsake-flux** and copy two web addresses:
+3. In Modal, open **Apps → keepsake-flux** and copy three web addresses:
    - `…-caricaturist-generate.modal.run`: **value ③**
    - `…-upscaler-upscale.modal.run`: **value ④** (optional)
+   - `…-settings.modal.run`: **value ⑧** (keeps admin-page changes permanently)
 4. Optional, so GitHub checks the live service after every deploy: add repository secrets `FLUX_ENDPOINT_URL` = ③, `FLUX_API_TOKEN` = ②, `UPSCALE_ENDPOINT_URL` = ④. Each check paints one test portrait (a few cents of free credit).
 
 ## 5. Cloudflare
@@ -66,7 +68,7 @@ Make a long random string, 40+ characters (e.g. <https://www.random.org/strings/
 
 1. Sign up at <https://render.com> with GitHub.
 2. **New → Blueprint →** choose `KeepsakePhotos`.
-3. Fill in `FLUX_ENDPOINT_URL` ③, `FLUX_API_TOKEN` ②, `UPSCALE_ENDPOINT_URL` ④, `CLOUDFLARE_ACCOUNT_ID` ⑤, `CLOUDFLARE_API_TOKEN` ⑥ and `ADMIN_PASSWORD` ⑦. Leave the four `GOOGLE_…` boxes empty.
+3. Fill in `FLUX_ENDPOINT_URL` ③, `FLUX_API_TOKEN` ②, `UPSCALE_ENDPOINT_URL` ④, `CLOUDFLARE_ACCOUNT_ID` ⑤, `CLOUDFLARE_API_TOKEN` ⑥, `ADMIN_PASSWORD` ⑦ and `SETTINGS_ENDPOINT_URL` ⑧. Leave the four `GOOGLE_…` boxes empty.
 4. Deploy. Your **guest link** is at the top, e.g. `https://keepsakephotos.onrender.com`.
 
 ## 7. First check
@@ -87,7 +89,7 @@ At `/admin` you can:
 - run the **wedding-day test** and the **style lab**;
 - open the **printable QR sign** (A4 poster or 4 table cards).
 
-On Render's free plan, admin-page changes are lost when the server restarts, until Google Drive is connected (they're then backed up there). For permanent changes before then, edit `public/js/config.js` or `public/js/i18n/strings.js`.
+Admin-page changes are kept permanently in your Modal account once `SETTINGS_ENDPOINT_URL` ⑧ is set (and in Google Drive too, if connected). Without either, Render's free plan forgets them when the server restarts. The admin page says which.
 
 ## Wedding day
 

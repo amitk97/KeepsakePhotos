@@ -1,6 +1,6 @@
 // Talks to our own server, which holds all the AI keys.
 
-import { SETTINGS } from "./config.js";
+import { SETTINGS } from "../config.js";
 
 // error.useFilter = true means: no AI artist is free, paint the on-phone watercolour instead.
 // error.code matches a key in i18n/strings.js, so the guest sees it in their language.

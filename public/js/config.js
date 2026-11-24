@@ -29,7 +29,7 @@ export const SETTINGS = {
   photoQuality: 0.9,
   maxFileBytes: 30 * 1024 * 1024,
   maxMessageLength: 60,
-  heicConverterUrl: "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js",
+  heicConverterUrl: "/vendor/heic2any.min.js", // MIT licence, see public/vendor/
   progressIntervalMs: 7000,
   queuePollMs: 2500,
   secondsPerPortrait: 25, // rough wait per guest ahead in line

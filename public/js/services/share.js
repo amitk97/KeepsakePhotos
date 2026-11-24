@@ -1,6 +1,6 @@
 // Saving and sharing the finished portrait.
 
-import { WEDDING } from "./config.js";
+import { WEDDING } from "../config.js";
 
 export function portraitFileName(guestName) {
   const safe = (guestName || "guest").replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "").toLowerCase() || "guest";

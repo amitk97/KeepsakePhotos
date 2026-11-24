@@ -1,7 +1,7 @@
 // Cloudflare Workers AI: FLUX.2 [klein] 4B (Apache 2.0), free daily allowance of 10,000 neurons.
 // Takes the small (<512px) copy of the photo as its reference image.
 
-import { WATERCOLOUR_PROMPT } from "../prompts/watercolour.js";
+import { WATERCOLOUR_PROMPT } from "./styles.js";
 import { createDailyCounter } from "../lib/usage.js";
 import { NoImageError, ProviderBusyError, ProviderError } from "./errors.js";
 

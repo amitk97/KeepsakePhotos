@@ -5,8 +5,8 @@ import { readFileSync } from "node:fs";
 import { createApp } from "../server/app.js";
 import { loadConfig } from "../server/config.js";
 import { imageSize } from "../server/lib/imageSize.js";
-import { createUpscaler } from "../server/providers/upscaler.js";
-import { STYLE_VARIANTS, styleById } from "../server/prompts/watercolour.js";
+import { createUpscaler } from "../server/engines/upscaler.js";
+import { STYLE_VARIANTS, styleById } from "../server/engines/styles.js";
 
 const quiet = { log() {}, warn() {}, error() {} };
 const PHOTO = "A".repeat(2000);

@@ -4,8 +4,8 @@ import http from "node:http";
 import { createApp } from "../server/app.js";
 import { loadConfig } from "../server/config.js";
 import { createRateLimiter } from "../server/lib/rateLimit.js";
-import { createGeminiClient, GeminiError } from "../server/gemini/client.js";
-import { buildCaricaturePrompt } from "../server/gemini/prompts.js";
+import { createGeminiClient, GeminiError } from "../server/engines/gemini/client.js";
+import { buildCaricaturePrompt } from "../server/engines/gemini/prompts.js";
 
 const PHOTO = "A".repeat(2000); // valid-looking base64
 const quietLogger = { log() {}, warn() {}, error() {} };

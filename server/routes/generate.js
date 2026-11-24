@@ -7,9 +7,9 @@
 import { randomUUID } from "node:crypto";
 import { HttpError, clientIp, deviceId, readJsonBody, sendJson } from "../lib/http.js";
 import { CancelledError, QueueFullError } from "../lib/queue.js";
-import { NoImageError } from "../providers/errors.js";
-import { AllEnginesUnavailableError } from "../providers/chain.js";
-import { styleById } from "../prompts/watercolour.js";
+import { NoImageError } from "../engines/errors.js";
+import { AllEnginesUnavailableError } from "../engines/chain.js";
+import { styleById } from "../engines/styles.js";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
@@ -120,14 +120,5 @@ export function createGenerateHandler({ config, provider, rateLimiter, ipLimiter
       if (err instanceof AllEnginesUnavailableError) return useFilter(res, "unavailable");
       return useFilter(res, "error");
     }
-  };
-}
-
-// GET /api/queue?id=…  → { position, active, waiting }   (position 0 = being painted now)
-export function createQueueHandler({ queue }) {
-  return function handleQueue(req, res) {
-    const id = new URL(req.url, "http://x").searchParams.get("id") || "";
-    const position = ID_RE.test(id) ? queue.position(id) : -1;
-    return sendJson(res, 200, { position, ...queue.stats() });
   };
 }

@@ -6,8 +6,8 @@ import os from "node:os";
 import path from "node:path";
 import { createApp } from "../server/app.js";
 import { loadConfig } from "../server/config.js";
-import { cleanPatch } from "../server/lib/settings.js";
-import { createDriveClient, createUploadQueue } from "../server/drive/client.js";
+import { cleanPatch } from "../server/storage/settings.js";
+import { createDriveClient, createUploadQueue } from "../server/storage/drive.js";
 import { keepsakeFileName } from "../server/routes/keepsake.js";
 
 const quiet = { log() {}, warn() {}, error() {} };

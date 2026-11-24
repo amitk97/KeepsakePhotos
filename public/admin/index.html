@@ -6,6 +6,7 @@
     <meta name="robots" content="noindex">
     <title>Keepsake admin</title>
     <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../css/fonts.css">
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="admin.css">
     <script type="module" src="admin.js"></script>
@@ -90,7 +91,8 @@
             <!-- Settings -->
             <section class="card">
                 <h2>Wording and limits</h2>
-                <p class="lead">Leave a box empty to use the app's built-in wording. Saved on the server, and backed up to Google Drive once it's connected.</p>
+                <p class="lead">Leave a box empty to use the app's built-in wording.</p>
+                <p id="settingsKept" class="status"></p>
                 <form id="settingsForm" class="form">
                     <fieldset>
                         <legend>Keepsake (printed on every portrait)</legend>

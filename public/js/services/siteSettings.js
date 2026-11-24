@@ -1,8 +1,8 @@
 // Fetches wording the hosts changed on the admin page and applies it.
 // If the server can't be reached (e.g. offline), the built-in wording is used.
 
-import { WEDDING } from "./config.js";
-import { setOverrides } from "./i18n/index.js";
+import { WEDDING } from "../config.js";
+import { setOverrides } from "../i18n/index.js";
 import { deviceId } from "./api.js";
 
 let uploadsEnabled = false;

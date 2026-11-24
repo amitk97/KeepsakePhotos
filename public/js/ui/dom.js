@@ -1,6 +1,6 @@
 // DOM helpers: steps, errors, photo preview, progress text.
 
-import { t } from "./i18n/index.js";
+import { t } from "../i18n/index.js";
 
 export const $ = (id) => document.getElementById(id);
 

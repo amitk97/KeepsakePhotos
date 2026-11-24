@@ -1,6 +1,6 @@
 // Reading, converting (HEIC) and resizing guest photos.
 
-import { SETTINGS } from "./config.js";
+import { SETTINGS } from "../config.js";
 
 // code matches an error key in i18n/strings.js (errTooLarge, errNotImage, errUnreadable).
 export class PhotoError extends Error {

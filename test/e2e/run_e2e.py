@@ -425,9 +425,14 @@ def main():
                 expect(sp.locator(".qr svg")).to_have_count(1)
                 audit(sp, "QR sign")
                 sp.screenshot(path=OUT / "9-sign.png", full_page=True)
-                qr_png = sp.locator(".qr").first.screenshot()
+                sp.evaluate("document.fonts.ready")
+                sp.wait_for_timeout(300)  # let the layout settle after fonts load
                 import numpy as np, cv2
-                decoded = cv2.QRCodeDetector().detectAndDecode(cv2.imdecode(np.frombuffer(qr_png, np.uint8), cv2.IMREAD_GRAYSCALE))[0]
+                gray = cv2.imdecode(np.frombuffer(sp.locator(".qr").first.screenshot(), np.uint8), cv2.IMREAD_GRAYSCALE)
+                decoded = ""
+                for det in (cv2.QRCodeDetector(), cv2.QRCodeDetectorAruco()):
+                    for scale in (1, 2):
+                        decoded = decoded or det.detectAndDecode(cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST))[0]
                 assert decoded == f"{site}/", f"QR decoded to {decoded!r}"
                 sp.select_option("#size", "card")
                 expect(sp.locator(".qr svg")).to_have_count(4)

@@ -145,7 +145,7 @@ describe("security headers", () => {
       const csp = res.headers.get("content-security-policy");
       assert.match(csp, /default-src 'self'/);
       assert.match(csp, /frame-ancestors 'none'/);
-      assert.doesNotMatch(csp, /unsafe-inline|unsafe-eval/);
+      assert.doesNotMatch(csp, /unsafe-inline|unsafe-eval|https:/);
       assert.equal(res.headers.get("x-frame-options"), "DENY");
     });
   });

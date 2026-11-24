@@ -1,7 +1,7 @@
 // Before/after slider: the guest's photo on the left, the painting on the right.
 
-import { $ } from "./ui.js";
-import { t } from "./i18n/index.js";
+import { $ } from "./dom.js";
+import { t } from "../i18n/index.js";
 
 function setPosition(pct) {
   $("compare").style.setProperty("--pos", `${pct}%`);

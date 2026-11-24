@@ -1,8 +1,8 @@
 // Loads your own frame and monogram artwork, if set in config.js (DESIGN).
 // Missing or broken files are ignored, so the built-in frame is used instead.
 
-import { DESIGN } from "./config.js";
-import { loadImage } from "./photo.js";
+import { DESIGN } from "../config.js";
+import { loadImage } from "../media/photo.js";
 
 const loaded = { frame: null, monogram: null };
 

@@ -1,6 +1,6 @@
 // Admin page: status, studio switch, wedding-day test, wording and limits.
 
-import { processFile } from "../js/photo.js";
+import { processFile } from "../js/media/photo.js";
 
 const $ = (id) => document.getElementById(id);
 const LANGS = ["en", "gu", "hi"];
@@ -88,6 +88,10 @@ function render(s) {
     ? `Connected. ${s.drive.uploaded} keepsakes uploaded, ${s.drive.pending} waiting, ${s.drive.failed} failed.` +
       (s.drive.lastError ? ` Last problem: ${s.drive.lastError}` : "")
     : "Not connected yet, so keepsakes are only saved on guests' phones. See SETUP.md → Google Drive.";
+
+  $("settingsKept").textContent = s.settingsKeptIn?.length
+    ? `Saved permanently (${s.settingsKeptIn.join(" and ")}).`
+    : "Saved until the server restarts. To keep changes permanently, set SETTINGS_ENDPOINT_URL (SETUP.md).";
 
   $("problems").replaceChildren(
     ...(s.recentProblems.length
