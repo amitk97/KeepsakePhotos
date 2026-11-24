@@ -1,0 +1,53 @@
+:root {
+  --ivory: #faf6ee;
+  --green: #1d3b2d;
+  --gold: #b89b62;
+  --serif: "Cormorant Garamond", "Noto Serif Gujarati", "Noto Serif Devanagari", Georgia, serif;
+  --sans: "Plus Jakarta Sans", "Noto Serif Gujarati", "Noto Serif Devanagari", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: #ddd; color: var(--green); font-family: var(--sans); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; padding: 12px; background: #fff; font-size: 14px; }
+.controls input, .controls select, .controls button { font: inherit; padding: 6px 10px; }
+.controls button { background: var(--green); color: var(--ivory); border: none; border-radius: 8px; cursor: pointer; }
+
+/* A4 page */
+#sheet { width: 210mm; min-height: 297mm; margin: 16px auto; background: var(--ivory); }
+#sheet.card { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; height: 297mm; }
+
+.sign { padding: 14mm; height: 297mm; display: flex; }
+#sheet.card .sign { height: auto; padding: 6mm; border: 0.2mm dashed #bbb; }
+.frame {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  border: 2.5mm solid var(--gold); outline: 1.2mm solid var(--green); outline-offset: -5mm; padding: 14mm 10mm;
+  background: radial-gradient(circle at center, #fff 30%, var(--ivory) 100%);
+}
+#sheet.card .frame { border-width: 1.2mm; outline-width: 0.6mm; outline-offset: -2.5mm; padding: 6mm 4mm; }
+
+.names { font-family: var(--serif); font-weight: 700; font-size: 34pt; margin: 0; }
+.venue { font-size: 11pt; letter-spacing: 0.18em; color: #7d6229; font-weight: 600; margin: 4mm 0 10mm; }
+h1 { font-family: var(--serif); font-size: 30pt; margin: 0; }
+.lines { display: flex; flex-direction: column; gap: 1.5mm; margin: 3mm 0 0; font-family: var(--serif); font-weight: 600; font-size: 18pt; }
+.lines.small { font-size: 12pt; font-family: var(--sans); font-weight: 500; }
+.qr { width: 90mm; height: 90mm; margin: 10mm 0 6mm; padding: 4mm; background: #fff; border-radius: 3mm; }
+.qr svg { width: 100%; height: 100%; display: block; }
+.cta { font-size: 15pt; font-weight: 600; margin: 0; }
+.link { font-size: 10pt; color: #555; margin: 6mm 0 0; word-break: break-all; }
+
+#sheet.card .names { font-size: 16pt; }
+#sheet.card .venue { font-size: 6pt; margin: 1.5mm 0 3mm; }
+#sheet.card h1 { font-size: 14pt; }
+#sheet.card .lines { font-size: 9pt; margin-top: 1mm; gap: 0.5mm; }
+#sheet.card .lines.small { font-size: 7pt; }
+#sheet.card .qr { width: 42mm; height: 42mm; margin: 3mm 0 2mm; padding: 2mm; }
+#sheet.card .cta { font-size: 8pt; }
+#sheet.card .link { font-size: 6pt; margin-top: 2mm; }
+
+@page { size: A4; margin: 0; }
+@media print {
+  body { background: none; }
+  .no-print { display: none; }
+  #sheet { margin: 0; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

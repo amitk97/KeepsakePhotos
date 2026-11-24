@@ -1,0 +1,96 @@
+// Making the keepsake. Asks AI artists in turn until one paints a caricature:
+//   1. your own server's engines (Cloudflare, FLUX on Modal), once they're set up;
+//   2. free public artists on Hugging Face, straight from the guest's phone (no account, no cost);
+//   3. if every artist is busy, the guest is asked to try again (their photo and words are kept).
+// Then lays out the keepsake and shows the result.
+
+import { SETTINGS } from "../config.js";
+import { t } from "../i18n/index.js";
+import { state } from "../state.js";
+import * as ui from "../ui/dom.js";
+import { hideCompare, showCompare } from "../ui/compare.js";
+import { getDesign } from "../ui/design.js";
+import { loadImage } from "../media/photo.js";
+import { fetchQueuePosition, newRequestId, requestCaricature } from "../services/api.js";
+import { sendKeepsakeToHosts, stylePrompt } from "../services/siteSettings.js";
+import { canShareFiles } from "../services/share.js";
+import { paintWithFreeArtists } from "../ai/huggingFace.js";
+import { composePortrait, waitForFonts } from "../portrait/compose.js";
+import { goToStep } from "./navigation.js";
+
+const canvas = () => ui.$("portraitCanvas");
+
+async function blobToImage(blob) {
+  const url = URL.createObjectURL(blob);
+  const image = await loadImage(url);
+  const artUrl = await new Promise((resolve) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.readAsDataURL(blob);
+  });
+  URL.revokeObjectURL(url);
+  return { image, artUrl };
+}
+
+// Returns { image, artUrl, ticket }. Throws if no artist could paint.
+async function paint(requestId) {
+  // 1. Your server's engines.
+  try {
+    const { image: url, keepsakeTicket } = await requestCaricature({
+      photoBase64: state.photoBase64,
+      smallPhotoBase64: state.smallPhotoBase64,
+      requestId,
+    });
+    return { image: await loadImage(url), artUrl: url, ticket: keepsakeTicket || null };
+  } catch (err) {
+    if (!err.useFilter) throw err; // a problem with the photo or limits: tell the guest
+    console.info("Server artists unavailable, asking free artists:", err.message);
+  }
+
+  // 2. Free artists on Hugging Face.
+  const photo = await (await fetch(state.photoDataUrl)).blob();
+  const { blob } = await paintWithFreeArtists(photo, stylePrompt(), {
+    onTry: (n, total) => ui.showStatus(n > 1 ? t("tryingArtist", n, total) : ""),
+  });
+  return { ...(await blobToImage(blob)), ticket: null };
+}
+
+async function showKeepsake({ image, artUrl, ticket }) {
+  const nameLine = t("illustratedFor", state.guestName);
+  await waitForFonts(`${nameLine} ${state.guestMessage}`);
+  const { frame, monogram } = getDesign();
+  composePortrait(canvas(), { image, guestName: state.guestName, message: state.guestMessage, nameLine, frame, monogram });
+  canvas().setAttribute("aria-label", t("keepsakeAlt", state.guestName, state.guestMessage));
+  showCompare(state.photoDataUrl, artUrl);
+  sendKeepsakeToHosts(canvas(), state.guestName, ticket);
+  goToStep(4);
+  ui.$("shareBtn").classList.toggle("hidden", !(await canShareFiles(canvas(), state.guestName)));
+}
+
+// Also used by "Paint It Again" and "Try again".
+export async function makePortrait() {
+  if (state.busy || !state.photoBase64) return;
+  state.busy = true;
+  goToStep(3);
+  hideCompare();
+  const stopProgress = ui.startProgress(t("progress"), SETTINGS.progressIntervalMs);
+
+  const requestId = newRequestId();
+  const poll = setInterval(async () => {
+    const { position } = await fetchQueuePosition(requestId);
+    if (position > 0) ui.showQueuePosition(position, SETTINGS.secondsPerPortrait);
+  }, SETTINGS.queuePollMs);
+
+  try {
+    await showKeepsake(await paint(requestId));
+  } catch (err) {
+    console.error("No artist could paint:", err);
+    goToStep(2);
+    ui.showError(t(err.code || "errAllBusy"));
+  } finally {
+    clearInterval(poll);
+    ui.showStatus("");
+    stopProgress();
+    state.busy = false;
+  }
+}

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>QR sign: Pooja &amp; Amit keepsake</title>
+    <link rel="stylesheet" href="../css/fonts.css">
+    <link rel="stylesheet" href="sign.css">
+    <script type="module" src="sign.js"></script>
+</head>
+<body>
+    <div class="controls no-print">
+        <label>Size
+            <select id="size">
+                <option value="a4">A4 poster</option>
+                <option value="card">Table cards (4 per A4)</option>
+            </select>
+        </label>
+        <label>Link <input id="url" type="url" size="34"></label>
+        <button id="printBtn" type="button">Print / save as PDF</button>
+    </div>
+
+    <template id="signTpl">
+        <article class="sign">
+            <div class="frame">
+                <p class="names">Pooja &amp; Amit</p>
+                <p class="venue">SOMERSET ESTATE • APRIL 2028</p>
+                <h1>Your watercolour portrait</h1>
+                <p class="lines">
+                    <span lang="gu">તમારું વોટરકલર પોટ્રેટ</span>
+                    <span lang="hi">आपका वॉटरकलर पोर्ट्रेट</span>
+                </p>
+                <div class="qr"></div>
+                <p class="cta">Scan with your phone camera</p>
+                <p class="lines small">
+                    <span lang="gu">ફોન કેમેરાથી સ્કેન કરો</span>
+                    <span lang="hi">फ़ोन कैमरे से स्कैन करें</span>
+                </p>
+                <p class="link"></p>
+            </div>
+        </article>
+    </template>
+
+    <main id="sheet"></main>
+</body>
+</html>

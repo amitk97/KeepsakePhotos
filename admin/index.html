@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Keepsake admin</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../css/fonts.css">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="admin.css">
+    <script type="module" src="admin.js"></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="badge">Hosts only</div>
+        <h1 class="couple">Keepsake admin</h1>
+    </header>
+
+    <main class="admin">
+        <!-- Login -->
+        <section id="loginCard" class="card hidden">
+            <h2>Log in</h2>
+            <form id="loginForm" class="form">
+                <label class="field-label" for="password">Admin password</label>
+                <input id="password" type="password" class="input" autocomplete="current-password" required>
+                <p id="loginError" class="error hidden" role="alert"></p>
+                <button class="btn btn-primary" type="submit">Log in</button>
+            </form>
+        </section>
+
+        <div id="dash" class="hidden">
+            <!-- Overview -->
+            <section class="card">
+                <div class="row-between">
+                    <h2>Today</h2>
+                    <button id="logoutBtn" type="button" class="btn btn-link btn-small">Log out</button>
+                </div>
+                <div class="stats">
+                    <div class="stat"><span id="statPortraits">0</span><small>AI portraits today</small></div>
+                    <div class="stat"><span id="statCap">0</span><small>daily cap</small></div>
+                    <div class="stat"><span id="statQueue">0</span><small>painting / waiting</small></div>
+                    <div class="stat"><span id="statUploads">–</span><small>sent to Drive</small></div>
+                </div>
+                <label class="switch">
+                    <input id="studioOpen" type="checkbox">
+                    <span><strong>AI studio open.</strong> Turn off to give every guest the free on-phone watercolour instead.</span>
+                </label>
+            </section>
+
+            <!-- Wedding-day test -->
+            <section class="card">
+                <h2>Wedding-day test</h2>
+                <p class="lead">Paints one test portrait with each AI engine and checks Google Drive. Uses a little of your free allowance.</p>
+                <button id="testBtn" type="button" class="btn btn-primary">Run the test</button>
+                <div id="testResult" class="test-result hidden" aria-live="polite"></div>
+            </section>
+
+            <!-- Style lab -->
+            <section class="card">
+                <h2>Style lab</h2>
+                <p class="lead">Paint one real photo in each watercolour style, then pick the one every guest gets. Uses a little free allowance per style.</p>
+                <p>Current style: <strong id="currentStyle">–</strong></p>
+                <div class="form">
+                    <label class="field-label" for="labEngine">Engine</label>
+                    <select id="labEngine" class="input"></select>
+                    <label class="field-label" for="labPhoto">Photo (ideally someone in a wedding outfit)</label>
+                    <input id="labPhoto" type="file" accept="image/*,.heic,.heif" class="input">
+                    <button id="labBtn" type="button" class="btn btn-primary" disabled>Paint in every style</button>
+                </div>
+                <p id="labMsg" class="status hidden" aria-live="polite"></p>
+                <div id="labResults" class="lab-grid"></div>
+            </section>
+
+            <!-- Engines -->
+            <section class="card">
+                <h2>AI engines</h2>
+                <p class="lead">Tried in this order. If all are unavailable, guests' phones paint a simpler watercolour.</p>
+                <table class="table">
+                    <thead><tr><th>Engine</th><th>Status</th><th>Free allowance today</th></tr></thead>
+                    <tbody id="enginesBody"></tbody>
+                </table>
+            </section>
+
+            <!-- Drive -->
+            <section class="card">
+                <h2>Google Drive</h2>
+                <p id="driveStatus" class="lead"></p>
+            </section>
+
+            <!-- Settings -->
+            <section class="card">
+                <h2>Wording and limits</h2>
+                <p class="lead">Leave a box empty to use the app's built-in wording.</p>
+                <p id="settingsKept" class="status"></p>
+                <form id="settingsForm" class="form">
+                    <fieldset>
+                        <legend>Keepsake (printed on every portrait)</legend>
+                        <label class="field-label" for="coupleNames">Couple names</label>
+                        <input id="coupleNames" class="input" maxlength="80" placeholder="Pooja & Amit">
+                        <label class="field-label" for="keepsakeVenueLine">Venue and date line</label>
+                        <input id="keepsakeVenueLine" class="input" maxlength="80" placeholder="SOMERSET ESTATE  •  APRIL 2028">
+                        <label class="field-label" for="keepsakeFooterLine">Bottom line</label>
+                        <input id="keepsakeFooterLine" class="input" maxlength="80" placeholder="WITH LOVE & CELEBRATION  •  POOJA & AMIT">
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>Website venue line</legend>
+                        <label class="field-label" for="venue-en">English</label>
+                        <input id="venue-en" class="input" maxlength="80" placeholder="Somerset Estate • April 2028">
+                        <label class="field-label" for="venue-gu">ગુજરાતી</label>
+                        <input id="venue-gu" class="input" maxlength="80" lang="gu" placeholder="સમરસેટ એસ્ટેટ • એપ્રિલ 2028">
+                        <label class="field-label" for="venue-hi">हिंदी</label>
+                        <input id="venue-hi" class="input" maxlength="80" lang="hi" placeholder="समरसेट एस्टेट • अप्रैल 2028">
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>Message suggestions (one per line, up to 6)</legend>
+                        <label class="field-label" for="presets-en">English</label>
+                        <textarea id="presets-en" class="input" rows="4"></textarea>
+                        <label class="field-label" for="presets-gu">ગુજરાતી</label>
+                        <textarea id="presets-gu" class="input" rows="4" lang="gu"></textarea>
+                        <label class="field-label" for="presets-hi">हिंदी</label>
+                        <textarea id="presets-hi" class="input" rows="4" lang="hi"></textarea>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>Limits</legend>
+                        <label class="field-label" for="dailyPortraitCap">AI portraits per day (all guests)</label>
+                        <input id="dailyPortraitCap" class="input" type="number" min="0" max="100000">
+                    </fieldset>
+
+                    <p id="settingsMsg" class="status hidden" aria-live="polite"></p>
+                    <button class="btn btn-primary" type="submit">Save</button>
+                </form>
+            </section>
+
+            <!-- Sign -->
+            <section class="card">
+                <h2>QR sign</h2>
+                <p class="lead">A printable sign with a QR code to this site, in English, Gujarati and Hindi.</p>
+                <a class="btn btn-secondary" href="../sign/" target="_blank" rel="noopener">Open the sign</a>
+            </section>
+
+            <!-- Problems -->
+            <section class="card">
+                <h2>Recent problems</h2>
+                <ul id="problems" class="problems"></ul>
+            </section>
+        </div>
+    </main>
+</body>
+</html>

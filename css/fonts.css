@@ -1,0 +1,39 @@
+/* Fonts hosted with the site (no Google Fonts calls: more private, and works offline).
+   Trimmed to the letters the site uses; Gujarati and Devanagari only download when that
+   language appears, thanks to unicode-range. Licences: public/fonts/OFL-*.txt (SIL Open Font Licence). */
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("../fonts/cormorant-garamond.woff") format("woff");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("../fonts/cormorant-garamond-italic.woff") format("woff");
+  font-weight: 300 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("../fonts/plus-jakarta-sans.woff") format("woff");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Noto Serif Gujarati";
+  src: url("../fonts/noto-serif-gujarati.woff") format("woff");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0A80-0AFF, U+200C-200D, U+20B9, U+25CC, U+A830-A839;
+}
+@font-face {
+  font-family: "Noto Serif Devanagari";
+  src: url("../fonts/noto-serif-devanagari.woff") format("woff");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0900-097F, U+1CD0-1CFF, U+200C-200D, U+20A8, U+20B9, U+25CC, U+A830-A839, U+A8E0-A8FF;
+}
