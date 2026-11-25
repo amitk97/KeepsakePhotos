@@ -6,6 +6,7 @@ import * as ui from "../ui/dom.js";
 import * as camera from "../media/camera.js";
 import { preparePhoto, processFile } from "../media/photo.js";
 import { saveDraft } from "../services/drafts.js";
+import { checkPhoto } from "../media/photoCheck.js";
 import { goToStep } from "./navigation.js";
 
 function setPhoto({ dataUrl, base64, smallBase64 }) {
@@ -13,6 +14,10 @@ function setPhoto({ dataUrl, base64, smallBase64 }) {
   state.smallPhotoBase64 = smallBase64;
   state.photoDataUrl = dataUrl;
   ui.showPhotoPreview(dataUrl);
+  ui.showPhotoWarnings([]);
+  checkPhoto(dataUrl).then((problems) => {
+    if (state.photoDataUrl === dataUrl) ui.showPhotoWarnings(problems.map((p) => t(`photo_${p}`)));
+  });
 }
 
 // The photo buttons are <label>s for the file inputs, so a tap opens the phone's camera or gallery

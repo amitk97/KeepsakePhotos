@@ -35,14 +35,14 @@ export function setPhotoProcessing(on) {
 export function showPhotoPreview(dataUrl) {
   $("photoPreviewImg").src = dataUrl;
   $("photoPreviewContainer").classList.remove("hidden");
-  $("photoSelectionButtons").classList.add("hidden");
+  $("photoDropZone").classList.add("hidden");
   $("submitBtn").disabled = false;
 }
 
 export function clearPhotoPreview() {
   $("photoPreviewImg").removeAttribute("src");
   $("photoPreviewContainer").classList.add("hidden");
-  $("photoSelectionButtons").classList.remove("hidden");
+  $("photoDropZone").classList.remove("hidden");
   $("submitBtn").disabled = true;
 }
 
@@ -104,4 +104,11 @@ export function showStatus(text) {
   const el = $("queueStatus");
   el.textContent = text || "";
   el.classList.toggle("hidden", !text);
+}
+
+// Gentle tips under the photo preview (too dark, blurry, no face). Empty list hides them.
+export function showPhotoWarnings(messages) {
+  const box = $("photoWarnings");
+  box.replaceChildren(...messages.map((m) => Object.assign(document.createElement("li"), { textContent: m })));
+  box.classList.toggle("hidden", messages.length === 0);
 }
