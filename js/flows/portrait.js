@@ -40,6 +40,7 @@ async function paint(requestId) {
       photoBase64: state.photoBase64,
       smallPhotoBase64: state.smallPhotoBase64,
       requestId,
+      background: state.background,
     });
     return { image: await loadImage(url), artUrl: url, ticket: keepsakeTicket || null };
   } catch (err) {
@@ -49,7 +50,7 @@ async function paint(requestId) {
 
   // 2. Free artists on Hugging Face.
   const photo = await (await fetch(state.photoDataUrl)).blob();
-  const { blob } = await paintWithFreeArtists(photo, stylePrompt(), {
+  const { blob } = await paintWithFreeArtists(photo, stylePrompt(state.background), {
     onTry: (n, total) => ui.showStatus(n > 1 ? t("tryingArtist", n, total) : ""),
   });
   return { ...(await blobToImage(blob)), ticket: null };

@@ -33,7 +33,7 @@ export function newRequestId() {
   return crypto.randomUUID ? crypto.randomUUID() : `r-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export async function requestCaricature({ photoBase64, smallPhotoBase64, requestId }) {
+export async function requestCaricature({ photoBase64, smallPhotoBase64, requestId, background }) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), SETTINGS.requestTimeoutMs);
 
@@ -41,7 +41,7 @@ export async function requestCaricature({ photoBase64, smallPhotoBase64, request
     const res = await fetch(SETTINGS.apiEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Request-Id": requestId, "X-Device-Id": deviceId() },
-      body: JSON.stringify({ image: photoBase64, smallImage: smallPhotoBase64, mimeType: "image/jpeg" }),
+      body: JSON.stringify({ image: photoBase64, smallImage: smallPhotoBase64, mimeType: "image/jpeg", background }),
       signal: controller.signal,
     });
     const data = await res.json().catch(() => ({}));

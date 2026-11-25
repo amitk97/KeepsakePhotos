@@ -6,6 +6,10 @@
 const KEEP_RULES =
   "Fit everyone fully inside the picture: show the whole head and hair of every person with clear empty space above the tallest head, and never crop heads, hair, hands or feet at the edges. " +
   "Keep every person clearly recognisable: same face shape, skin tone, hair, beard and expression. " +
+  "Keep everyone in their original positions relative to each other. " +
+  "Keep each person's pose: anyone standing stays standing and anyone sitting stays sitting. " +
+  "Keep any jewellery, mehndi, glasses and turbans exactly as they are. " +
+  "Keep natural, true skin tones with no colour cast from the background. " +
   "Paint only the people who are in the photo, exactly as many as there are: never add anyone. If there are several people, include every one of them, each equally recognisable. " +
   "Keep their outfits exactly the same: identical colours, fabrics, textures, sheen, patterns, embroidery, borders, " +
   "drape, silhouette and jewellery. Do not change, simplify or restyle the clothing. " +
@@ -13,7 +17,21 @@ const KEEP_RULES =
 
 const ENDING =
   "Pure watercolour only: no ink outlines, no pencil, no sketch lines. " +
-  "Plain warm ivory paper background with a light watercolour wash. No text, no borders, no signature.";
+  "BACKGROUND No text, no borders, no signature.";
+
+// Background colours guests can pick. "BACKGROUND" in a prompt is replaced with the chosen one.
+export const BACKGROUNDS = [
+  { id: "ivory", swatch: "#f7f1e6", prompt: "Plain soft ivory paper background, almost white, with only a very faint wash." },
+  { id: "blush", swatch: "#f3d9dc", prompt: "Plain paper background with a soft blush pink watercolour wash." },
+  { id: "sage", swatch: "#d5e0cf", prompt: "Plain paper background with a soft sage green watercolour wash." },
+  { id: "blue", swatch: "#d6e4f0", prompt: "Plain paper background with a soft powder blue watercolour wash." },
+  { id: "lilac", swatch: "#e2d8ee", prompt: "Plain paper background with a soft lilac watercolour wash." },
+];
+export const DEFAULT_BACKGROUND = "ivory";
+
+export function backgroundById(id) {
+  return BACKGROUNDS.find((b) => b.id === id) || BACKGROUNDS.find((b) => b.id === DEFAULT_BACKGROUND);
+}
 
 export const STYLE_VARIANTS = [
   {
@@ -82,4 +100,9 @@ export function styleById(id) {
 }
 
 // Kept for anything that wants the default text directly.
-export const WATERCOLOUR_PROMPT = styleById(DEFAULT_STYLE).prompt;
+// The full instructions for a style and background.
+export function promptFor(styleId, backgroundId) {
+  return styleById(styleId).prompt.replace("BACKGROUND", backgroundById(backgroundId).prompt + " ");
+}
+
+export const WATERCOLOUR_PROMPT = promptFor(DEFAULT_STYLE, DEFAULT_BACKGROUND);
