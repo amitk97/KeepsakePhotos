@@ -9,7 +9,7 @@ import { HttpError, clientIp, deviceId, readJsonBody, sendJson } from "../lib/ht
 import { CancelledError, QueueFullError } from "../lib/queue.js";
 import { NoImageError } from "../engines/errors.js";
 import { AllEnginesUnavailableError } from "../engines/chain.js";
-import { styleById } from "../engines/styles.js";
+import { promptFor } from "../engines/styles.js";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
@@ -43,7 +43,7 @@ export function createGenerateHandler({ config, provider, rateLimiter, ipLimiter
       return sendJson(res, status, { error: err.message || "Invalid request." });
     }
 
-    const { image, smallImage, mimeType = "image/jpeg" } = body;
+    const { image, smallImage, mimeType = "image/jpeg", background } = body;
     if (typeof image !== "string" || image.length < 100 || !BASE64_RE.test(image)) {
       return sendJson(res, 400, { error: "No photo received. Please try again." });
     }
@@ -92,7 +92,7 @@ export function createGenerateHandler({ config, provider, rateLimiter, ipLimiter
     });
 
     try {
-      const prompt = styleVariant ? styleById(styleVariant).prompt : undefined;
+      const prompt = promptFor(styleVariant, typeof background === "string" ? background : undefined);
       let result = await queue.run(
         id,
         () => provider.createCaricature({ imageBase64: image, smallImageBase64: smallImage, mimeType, prompt }),

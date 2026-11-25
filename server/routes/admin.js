@@ -9,7 +9,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { clientIp, readJsonBody, sendJson } from "../lib/http.js";
-import { STYLE_VARIANTS, styleById } from "../engines/styles.js";
+import { STYLE_VARIANTS, promptFor, styleById } from "../engines/styles.js";
 
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
@@ -79,7 +79,7 @@ export function createAdminHandler({ config, sessions, settings, provider, queue
     for (const id of chosen) {
       const style = styleById(id);
       const r = await timed(async () => {
-        const out = await p.createCaricature({ imageBase64: image, smallImageBase64: smallImage, mimeType: "image/jpeg", prompt: style.prompt });
+        const out = await p.createCaricature({ imageBase64: image, smallImageBase64: smallImage, mimeType: "image/jpeg", prompt: promptFor(style.id) });
         return { image: `data:${out.mimeType};base64,${out.data}` };
       });
       results.push({ id, name: style.name, ...r });

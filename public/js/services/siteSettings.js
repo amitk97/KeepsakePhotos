@@ -4,14 +4,14 @@
 import { WEDDING } from "../config.js";
 import { setOverrides } from "../i18n/index.js";
 import { deviceId } from "./api.js";
-import { DEFAULT_STYLE, styleById } from "../ai/styles.js";
+import { DEFAULT_STYLE, promptFor } from "../ai/styles.js";
 
 let uploadsEnabled = false;
 let styleVariant = DEFAULT_STYLE;
 
 // The instructions for the AI: the style chosen in the admin page's style lab, or the default.
-export function stylePrompt() {
-  return styleById(styleVariant).prompt;
+export function stylePrompt(background) {
+  return promptFor(styleVariant, background);
 }
 
 export async function loadSiteSettings() {

@@ -6,7 +6,7 @@ import { createApp } from "../server/app.js";
 import { loadConfig } from "../server/config.js";
 import { imageSize } from "../server/lib/imageSize.js";
 import { createUpscaler } from "../server/engines/upscaler.js";
-import { STYLE_VARIANTS, styleById } from "../server/engines/styles.js";
+import { STYLE_VARIANTS, promptFor, styleById } from "../server/engines/styles.js";
 
 const quiet = { log() {}, warn() {}, error() {} };
 const PHOTO = "A".repeat(2000);
@@ -121,7 +121,10 @@ describe("styles and upscaling through the server", () => {
       prompts.length = 0;
       const g = await call("/api/generate", { image: PHOTO, smallImage: PHOTO });
       assert.equal(g.status, 200);
-      assert.equal(prompts[0], styleById("fabric").prompt);
+      assert.equal(prompts[0], promptFor("fabric"));
+      await call("/api/generate", { image: PHOTO, smallImage: PHOTO, background: "lilac" });
+      assert.match(prompts[1], /lilac/);
+      assert.doesNotMatch(prompts[1], /BACKGROUND/);
       assert.equal(g.data.image, `data:image/png;base64,${fakePng(1536, 2048)}`);
     });
   });
