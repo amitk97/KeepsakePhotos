@@ -7,6 +7,7 @@ import { state } from "./state.js";
 import { $ } from "./ui/dom.js";
 import { initCompare } from "./ui/compare.js";
 import { initBackgrounds } from "./ui/backgrounds.js";
+import { initTodayCount } from "./ui/todayCount.js";
 import { loadDesign } from "./ui/design.js";
 import { closeLiveCamera } from "./media/camera.js";
 import { loadSiteSettings } from "./services/siteSettings.js";
@@ -46,6 +47,7 @@ initForm();
 applyTranslations();
 initCompare();
 initBackgrounds();
+initTodayCount();
 loadDesign();
 // Wording changed on the admin page arrives a moment later.
 loadSiteSettings().then(() => {
