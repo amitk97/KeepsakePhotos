@@ -409,3 +409,11 @@ main { flex: 1; display: flex; flex-direction: column; justify-content: center; 
 .drop-zone.dragging { border-color: var(--gold, #a8843a); background: rgba(168, 132, 58, 0.08); }
 .drop-hint { display: none; margin: 0.6rem 0 0; text-align: center; font-size: 0.9rem; opacity: 0.75; }
 @media (hover: hover) and (pointer: fine) { .drop-hint { display: block; } }
+
+/* Example keepsake on the welcome card */
+.sample { margin: 0; }
+.sample-pair { display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
+.sample-item { position: relative; flex: 1; max-width: 220px; }
+.sample-item img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 0.9rem; border: 1px solid var(--gold); background: #fff; }
+.sample-arrow { width: 1.4rem; height: 1.4rem; flex: none; color: var(--gold); }
+.sample figcaption { margin-top: 0.5rem; text-align: center; font-size: 0.85rem; opacity: 0.75; }

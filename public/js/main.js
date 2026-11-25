@@ -6,6 +6,7 @@ import { applyTranslations, setLang } from "./i18n/index.js";
 import { state } from "./state.js";
 import { $ } from "./ui/dom.js";
 import { initCompare } from "./ui/compare.js";
+import { initSample } from "./ui/sample.js";
 import { loadDesign } from "./ui/design.js";
 import { closeLiveCamera } from "./media/camera.js";
 import { loadSiteSettings } from "./services/siteSettings.js";
@@ -43,6 +44,7 @@ photo.initPhotoButtons();
 initForm();
 applyTranslations();
 initCompare();
+  initSample();
 loadDesign();
 // Wording changed on the admin page arrives a moment later.
 loadSiteSettings().then(() => {
