@@ -150,8 +150,8 @@ main { flex: 1; display: flex; flex-direction: column; justify-content: flex-sta
 .btn-primary { background: var(--green); color: var(--ivory); }
 .btn-primary:hover { background: var(--green-dark); }
 /* Not ready yet (no name or photo): an outlined button with readable text, not a faded block. */
-.btn-primary:disabled, .btn-primary:disabled:hover {
-  background: transparent; color: var(--green); border: 1.5px dashed var(--gold); cursor: not-allowed;
+.btn-primary:disabled, .btn-primary:disabled:hover, .btn-primary.not-ready, .btn-primary.not-ready:hover {
+  background: transparent; color: var(--green); border: 1.5px dashed var(--gold);
 }
 
 .btn-secondary { background: var(--ivory); color: var(--green); }
@@ -425,3 +425,13 @@ main { flex: 1; display: flex; flex-direction: column; justify-content: flex-sta
 .how-it-works { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .how-it-works li { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; line-height: 1.35; color: var(--green); text-align: center; }
 .how-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gold); color: var(--gold-text); font: italic 600 15px var(--serif); background: var(--ivory); }
+
+/* Shake when something is missing (name or photo) */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+.shake { animation: shake 0.4s ease-in-out; }
+@media (prefers-reduced-motion: reduce) { .shake { animation: none; } }
+.input[aria-invalid="true"] { border-color: #b91c1c; }

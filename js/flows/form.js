@@ -29,7 +29,10 @@ async function onSubmit(event) {
     ui.showError(t("errName"));
     return ui.flagField("guestName");
   }
-  if (!state.photoBase64) return ui.showError(t("errPhoto"));
+  if (!state.photoBase64) {
+    ui.showError(t("errPhoto"));
+    return ui.nudge($("photoDropZone"));
+  }
 
   state.guestName = name;
   state.guestMessage = message || t("defaultMessage");
