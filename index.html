@@ -76,6 +76,7 @@
                     <span id="photoLabel" class="field-label"><span><span data-i18n="photoLabel">Your Photo</span> <span class="required">*</span></span></span>
                     <div class="tip">👗 <strong data-i18n="tipStrong">Show off your outfit!</strong> <span data-i18n="tip">Step back so you're in shot from head to knees, in good light. Groups welcome, up to 4 people.</span></div>
 
+                    <div id="photoDropZone" class="drop-zone">
                     <div id="photoSelectionButtons" class="btn-grid two" role="group" aria-labelledby="photoLabel">
                         <label for="nativeCameraInput" class="btn btn-primary" data-photo="camera" role="button" tabindex="0">
                             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -85,6 +86,8 @@
                             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             <span data-i18n="choosePhoto">Choose Photo</span>
                         </label>
+                    </div>
+                    <p class="drop-hint" data-i18n="dropHint">…or drag and drop a photo here</p>
                     </div>
 
                     <!-- The photo buttons above are <label>s for these inputs, so a tap opens the camera or gallery
@@ -185,7 +188,7 @@
     </main>
 
     <footer class="site-footer">
-        <p data-i18n="footer">Pooja &amp; Amit Wedding. Designed with love.</p>
+        <p data-i18n="footer">Pooja &amp; Amit's wedding keepsake photos, designed with love.</p>
     </footer>
 </body>
 </html>

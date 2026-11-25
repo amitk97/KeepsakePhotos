@@ -64,7 +64,8 @@ export const STRINGS = {
     download: "Download PNG",
     regenerate: "Paint It Again",
     reset: "Make another portrait",
-    footer: "Pooja & Amit Wedding. Designed with love.",
+    footer: "Pooja & Amit's wedding keepsake photos, designed with love.",
+    dropHint: "…or drag and drop a photo here",
     language: "Language",
     progress: [
       "Studying your outfit…",
@@ -140,7 +141,8 @@ export const STRINGS = {
     download: "ડાઉનલોડ કરો",
     regenerate: "ફરી દોરો",
     reset: "બીજું પોટ્રેટ બનાવો",
-    footer: "પૂજા અને અમિતનાં લગ્ન. પ્રેમથી બનાવેલું.",
+    footer: "પૂજા અને અમિતનાં લગ્નના યાદગાર ફોટા, પ્રેમથી બનાવેલા.",
+    dropHint: "…અથવા ફોટો અહીં ખેંચીને મૂકો",
     language: "ભાષા",
     progress: [
       "તમારો પોશાક જોઈ રહ્યા છીએ…",
@@ -216,7 +218,8 @@ export const STRINGS = {
     download: "डाउनलोड करें",
     regenerate: "फिर से बनाएँ",
     reset: "एक और पोर्ट्रेट बनाएँ",
-    footer: "पूजा और अमित का विवाह। प्यार से बनाया गया।",
+    footer: "पूजा और अमित की शादी की यादगार तस्वीरें, प्यार से बनाई गईं।",
+    dropHint: "…या फ़ोटो यहाँ खींचकर छोड़ें",
     language: "भाषा",
     progress: [
       "आपका पहनावा देख रहे हैं…",
