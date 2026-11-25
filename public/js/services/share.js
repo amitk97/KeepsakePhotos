@@ -48,3 +48,16 @@ export async function downloadPortrait(canvas, guestName) {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
+
+// The guest's own photo, as they chose it (or the camera snapshot).
+export function downloadOriginal(photo, guestName) {
+  const url = photo instanceof Blob ? URL.createObjectURL(photo) : photo;
+  const ext = photo instanceof Blob && photo.type === "image/png" ? "png" : photo instanceof Blob && photo.type === "image/webp" ? "webp" : "jpg";
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = portraitFileName(guestName).replace(/\.png$/, `_original.${ext}`);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  if (photo instanceof Blob) setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}

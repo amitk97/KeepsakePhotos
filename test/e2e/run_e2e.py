@@ -150,8 +150,36 @@ def main():
             csp_blocks = []
             _new_context = browser.new_context
 
+            # A fake free Hugging Face artist (the real ones are on the internet); the page is pointed at it.
+            hf = {"mode": "ok", "calls": 0, "prompts": []}
+            art = png_bytes((768, 1024), (210, 190, 220))
+            cors = {"Access-Control-Allow-Origin": "*"}
+
+            def fake_hf(route):
+                req = route.request
+                if hf["mode"] == "down":
+                    return route.abort()
+                if hf["mode"] == "quota":
+                    return route.fulfill(status=200, headers=cors, content_type="text/event-stream",
+                                         body='event: error\ndata: "You have exceeded your GPU quota"\n\n') \
+                        if "/call/infer/" in req.url else route.fulfill(status=200, headers=cors, json={"event_id": "e1"} if "/call/" in req.url else ["/tmp/p.jpg"])
+                if req.url.endswith("/gradio_api/upload"):
+                    return route.fulfill(status=200, headers=cors, json=["/tmp/p.jpg"])
+                if req.url.endswith("/gradio_api/call/infer"):
+                    hf["calls"] += 1
+                    hf["prompts"].append(json.loads(req.post_data)["data"][1])
+                    return route.fulfill(status=200, headers=cors, json={"event_id": "e1"})
+                if "/gradio_api/call/infer/" in req.url:
+                    body = 'event: complete\ndata: [{"url": "https://fake-artist.hf.space/gradio_api/file=art.png"}, 1]\n\n'
+                    return route.fulfill(status=200, headers=cors, content_type="text/event-stream", body=body)
+                if "file=art.png" in req.url:
+                    return route.fulfill(status=200, headers=cors, content_type="image/png", body=art)
+                return route.fulfill(status=404, headers=cors, body="")
+
             def watched_context(**kw):
                 ctx = _new_context(**kw)
+                ctx.add_init_script("window.__KEEPSAKE_SPACES__ = [{ name: 'Fake artist', url: 'https://fake-artist.hf.space', fn: 'infer' }];")
+                ctx.route("https://fake-artist.hf.space/**", fake_hf)
                 ctx.on("console", lambda m: csp_blocks.append(m.text)
                        if ("Content Security Policy" in m.text or "Refused to" in m.text) else None)
                 return ctx
@@ -259,19 +287,35 @@ def main():
             expect(page.locator("#step4")).to_be_visible(timeout=20000)
             assert len(FakeGemini.requests) == before + 2
 
-            # ---- Every AI engine down: the phone paints a free watercolour itself (no stuck spinner) ----
+            # Result step: try another background, and save the original photo.
+            expect(page.locator(".again .swatch")).to_have_count(5)
+            page.locator(".again .swatch[aria-label='Lilac']").click()
+            expect(page.locator(".again .background-name")).to_have_text("Lilac")
+            with page.expect_download() as dl:
+                page.click("[data-action=saveOriginal]")
+            assert "_original." in dl.value.suggested_filename, dl.value.suggested_filename
+
+            # ---- Every server engine down: the phone asks the free artists (no stuck spinner) ----
             FakeGemini.mode = "fail"
+            calls = hf["calls"]
             page.click("[data-action=regenerate]")
             expect(page.locator("#step4")).to_be_visible(timeout=30000)
-            expect(page.locator("#quickNote")).to_be_visible()
-            page.screenshot(path=OUT / "4-quick-watercolour.png", full_page=True)
+            assert hf["calls"] == calls + 1
+            assert "lilac" in hf["prompts"][-1].lower()
+            page.screenshot(path=OUT / "4-free-artist.png", full_page=True)
+
+            # Free artists out of allowance: a clear message, details kept.
+            hf["mode"] = "quota"
+            page.click("[data-action=regenerate]")
+            expect(page.locator("#uploadErrorText")).to_contain_text("allowance", timeout=30000)
+            assert page.input_value("#guestName") != ""
+            hf["mode"] = "ok"
             FakeGemini.mode = "ok"
 
             # ---- Reset ----
             FakeGemini.mode = "ok"
-            page.click("[data-action=regenerate]")
+            page.click("#submitBtn")
             expect(page.locator("#step4")).to_be_visible(timeout=20000)
-            expect(page.locator("#quickNote")).to_be_hidden()
             page.click("[data-action=reset]")
             expect(page.locator("#step1")).to_be_visible()
             page.click("[data-action=begin]")
@@ -327,9 +371,10 @@ def main():
                 fp.set_input_files("#fileInput", str(photo))
                 expect(fp.locator("#submitBtn")).to_be_enabled()
                 fp.fill("#guestName", "Flux Guest")
+                calls = hf["calls"]
                 fp.click("#submitBtn")
                 expect(fp.locator("#step4")).to_be_visible(timeout=20000)
-                expect(fp.locator("#quickNote")).to_be_hidden()
+                assert hf["calls"] == calls, "free artist used while the server had one"
                 cf_req = [r for r in FakeGemini.requests if r["path"] == "/cf"][-1]
                 assert cf_req["auth"] == "Bearer cf-secret"
                 assert max(cf_req["small"]) < 512, cf_req["small"]
@@ -338,7 +383,7 @@ def main():
                 fp.screenshot(path=OUT / "6-hindi-result.png", full_page=True)
                 fctx.close()
 
-                # Offline: page still opens from the saved copy and paints the on-phone watercolour
+                # Offline: page still opens from the saved copy; with no artist reachable the guest is asked to retry
                 octx = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
                 op = octx.new_page()
                 op.goto(f"http://127.0.0.1:{flux_port}")
@@ -346,6 +391,7 @@ def main():
                 op.reload()
                 op.wait_for_function("!!navigator.serviceWorker.controller")
                 octx.set_offline(True)
+                hf["mode"] = "down"
                 op.reload()
                 expect(op.locator("#step1 h2")).to_be_visible()
                 op.click("[data-action=begin]")
@@ -353,8 +399,8 @@ def main():
                 expect(op.locator("#submitBtn")).to_be_enabled()
                 op.fill("#guestName", "Offline Guest")
                 op.click("#submitBtn")
-                expect(op.locator("#step4")).to_be_visible(timeout=20000)
-                expect(op.locator("#quickNote")).to_be_visible()
+                expect(op.locator("#uploadErrorText")).to_contain_text("busy", timeout=30000)
+                hf["mode"] = "ok"
                 op.screenshot(path=OUT / "7-offline.png", full_page=True)
                 octx.close()
 
@@ -387,13 +433,13 @@ def main():
                 expect(gp.locator("#suggestionChips .chip")).to_have_count(2)
                 expect(gp.locator("#suggestionChips .chip").first).to_have_text("Hello from admin")
 
-                # Close the studio: guests get the on-phone watercolour
+                # Close the studio: guests get the free artists
                 ap.uncheck("#studioOpen")
                 ap.wait_for_timeout(300)
                 gp.set_input_files("#fileInput", str(photo))
                 gp.fill("#guestName", "Closed Studio")
                 gp.click("#submitBtn")
-                expect(gp.locator("#quickNote")).to_be_visible(timeout=20000)
+                expect(gp.locator("#step4")).to_be_visible(timeout=20000)
                 ap.check("#studioOpen")
                 gctx.close()
 
@@ -406,9 +452,9 @@ def main():
                 ap.set_input_files("#labPhoto", str(photo))
                 expect(ap.locator("#labBtn")).to_be_enabled()
                 ap.click("#labBtn")
-                expect(ap.locator(".lab-card")).to_have_count(5, timeout=60000)
+                expect(ap.locator(".lab-card")).to_have_count(6, timeout=60000)
                 lab_prompts = [r["prompt"] for r in FakeGemini.requests if r["path"] == "/cf"][before:]
-                assert len(set(lab_prompts)) == 4, len(lab_prompts)
+                assert len(set(lab_prompts)) == 5, len(lab_prompts)
                 ap.locator(".lab-card", has_text="Rich fabric detail").get_by_role("button", name="Use this style").click()
                 expect(ap.locator("#currentStyle")).to_contain_text("Rich fabric detail")
                 expect(ap.locator(".lab-card.chosen")).to_have_count(1)

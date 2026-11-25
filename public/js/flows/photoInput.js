@@ -9,7 +9,9 @@ import { saveDraft } from "../services/drafts.js";
 import { checkPhoto } from "../media/photoCheck.js";
 import { goToStep } from "./navigation.js";
 
-function setPhoto({ dataUrl, base64, smallBase64 }) {
+function setPhoto({ dataUrl, base64, smallBase64 }, original = null) {
+  // Kept so guests can save their own photo at full quality (JPEG/PNG/WebP only; others use the prepared copy).
+  state.originalPhoto = original && /^image\/(jpeg|png|webp)$/.test(original.type) ? original : null;
   state.photoBase64 = base64;
   state.smallPhotoBase64 = smallBase64;
   state.photoDataUrl = dataUrl;
@@ -113,7 +115,7 @@ async function usePhotoFile(file) {
   goToStep(2);
   ui.setPhotoProcessing(true);
   try {
-    setPhoto(await processFile(file));
+    setPhoto(await processFile(file), file);
   } catch (err) {
     console.error(err);
     ui.showError(t(err.code || "errUnreadable"));

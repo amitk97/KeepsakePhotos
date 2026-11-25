@@ -43,6 +43,12 @@ function drawBackground(ctx, w, h) {
   ctx.fillRect(0, 0, w, h);
 }
 
+// Today's date, so keepsakes made on the wedding day carry the wedding date. A venue, if set, goes first.
+export function keepsakeDateLine(now = new Date()) {
+  const date = now.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }).toUpperCase();
+  return WEDDING.venueLine ? `${WEDDING.venueLine}  •  ${date}` : date;
+}
+
 function drawHeader(ctx, w) {
   ctx.textAlign = "center";
   ctx.fillStyle = THEME.green;
@@ -51,7 +57,7 @@ function drawHeader(ctx, w) {
 
   ctx.fillStyle = THEME.gold;
   ctx.font = FONTS.venue;
-  ctx.fillText(WEDDING.venueLine, w / 2, 155);
+  ctx.fillText(keepsakeDateLine(), w / 2, 155);
 
   ctx.strokeStyle = THEME.gold;
   ctx.lineWidth = 2;
