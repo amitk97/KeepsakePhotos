@@ -60,7 +60,7 @@ label.btn:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; 
   border-bottom: 1px solid rgba(184, 155, 98, 0.3);
 }
 
-main { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+main { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
 
 .site-footer {
   text-align: center;
@@ -114,9 +114,10 @@ main { flex: 1; display: flex; flex-direction: column; justify-content: center; 
   width: 64px; height: 64px; margin: 0 auto;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: var(--green); color: var(--gold);
+  background: var(--ivory); color: var(--green);
   border: 1px solid var(--gold);
-  font-family: var(--serif); font-size: 1.5rem;
+  box-shadow: 0 0 0 4px var(--ivory), 0 0 0 5px var(--gold); /* a fine double gold ring */
+  font-family: var(--serif); font-style: italic; font-size: 1.6rem; letter-spacing: 0.02em;
 }
 
 @keyframes subtleGlow {
@@ -150,7 +151,10 @@ main { flex: 1; display: flex; flex-direction: column; justify-content: center; 
 
 .btn-primary { background: var(--green); color: var(--ivory); }
 .btn-primary:hover { background: var(--green-dark); }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Not ready yet (no name or photo): an outlined button with readable text, not a faded block. */
+.btn-primary:disabled, .btn-primary:disabled:hover {
+  background: transparent; color: var(--green); border: 1.5px dashed var(--gold); cursor: not-allowed;
+}
 
 .btn-secondary { background: var(--ivory); color: var(--green); }
 .btn-secondary:hover { background: #fff; }
@@ -173,10 +177,10 @@ main { flex: 1; display: flex; flex-direction: column; justify-content: center; 
 .field-label {
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 8px;
-  font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  font-size: 15px; font-weight: 600; letter-spacing: 0; color: var(--green);
 }
 .required { color: #b91c1c; }
-.counter { font-family: ui-monospace, monospace; color: var(--gold-text); letter-spacing: 0; }
+.counter { font: 500 13px var(--sans); font-variant-numeric: tabular-nums; color: var(--gold-text); letter-spacing: 0; }
 
 .input {
   width: 100%;
@@ -404,16 +408,16 @@ main { flex: 1; display: flex; flex-direction: column; justify-content: center; 
   :root { --muted: var(--green); --gold-line: var(--gold-text); }
 }
 
-/* Drag and drop a photo (computers and tablets with a mouse or trackpad) */
-.drop-zone { border: 2px dashed transparent; border-radius: 1.25rem; padding: 0.25rem; transition: border-color .2s, background-color .2s; }
-.drop-zone.dragging { border-color: var(--gold, #a8843a); background: rgba(168, 132, 58, 0.08); }
-.drop-hint { display: none; margin: 0.6rem 0 0; text-align: center; font-size: 0.9rem; opacity: 0.75; }
-@media (hover: hover) and (pointer: fine) { .drop-hint { display: block; } }
+/* Photo area: on computers, a soft dashed box shows where a photo can be dropped.
+   Its edges line up with the boxes above and below. */
+.drop-zone { border-radius: 14px; transition: border-color .2s, background-color .2s; }
+.drop-hint { display: none; margin: 10px 0 0; text-align: center; font-size: 0.9rem; color: var(--muted); }
+@media (hover: hover) and (pointer: fine) {
+  .drop-zone { border: 1.5px dashed var(--gold); padding: 14px; background: rgba(255, 255, 255, 0.35); }
+  .drop-hint { display: block; }
+}
+.drop-zone.dragging { border: 1.5px dashed var(--green); background: rgba(184, 155, 98, 0.15); }
 
-/* Example keepsake on the welcome card */
-.sample { margin: 0; }
-.sample-pair { display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
-.sample-item { position: relative; flex: 1; max-width: 220px; }
-.sample-item img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 0.9rem; border: 1px solid var(--gold); background: #fff; }
-.sample-arrow { width: 1.4rem; height: 1.4rem; flex: none; color: var(--gold); }
-.sample figcaption { margin-top: 0.5rem; text-align: center; font-size: 0.85rem; opacity: 0.75; }
+/* Tips about the chosen photo (dark, blurry, no face) */
+.photo-warnings { margin: 10px 0 0; padding: 10px 12px 10px 30px; border-radius: 12px; background: #fff8e6; border: 1px solid #e8d29a; color: #6b4e12; font-size: 13px; line-height: 1.45; text-align: left; }
+.photo-warnings li + li { margin-top: 4px; }
