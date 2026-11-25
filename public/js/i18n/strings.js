@@ -18,6 +18,9 @@ export const STRINGS = {
   en: {
     badge: "Wedding Keepsake Studio",
     venueLine: "April 2028",
+    how1: "Add a photo",
+    how2: "Write a message",
+    how3: "Get your caricature in about a minute",
     welcomeEyebrow: "Watercolour Caricature Portrait",
     welcomeTitle: "Create Your Watercolour Wedding Portrait",
     welcomeLead:
@@ -99,6 +102,9 @@ export const STRINGS = {
   gu: {
     badge: "લગ્ન યાદગીરી સ્ટુડિયો",
     venueLine: "એપ્રિલ 2028",
+    how1: "ફોટો ઉમેરો",
+    how2: "સંદેશ લખો",
+    how3: "લગભગ એક મિનિટમાં તમારું કેરિકેચર મેળવો",
     welcomeEyebrow: "વોટરકલર કેરીકેચર પોટ્રેટ",
     welcomeTitle: "તમારું વોટરકલર લગ્ન પોટ્રેટ બનાવો",
     welcomeLead:
@@ -180,6 +186,9 @@ export const STRINGS = {
   hi: {
     badge: "विवाह यादगार स्टूडियो",
     venueLine: "अप्रैल 2028",
+    how1: "फ़ोटो जोड़ें",
+    how2: "संदेश लिखें",
+    how3: "लगभग एक मिनट में अपना कैरिकेचर पाएँ",
     welcomeEyebrow: "वॉटरकलर कैरिकेचर पोर्ट्रेट",
     welcomeTitle: "अपना वॉटरकलर विवाह पोर्ट्रेट बनाएँ",
     welcomeLead:

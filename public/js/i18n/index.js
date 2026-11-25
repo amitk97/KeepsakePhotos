@@ -16,8 +16,14 @@ function initialLang() {
   } catch {
     // storage blocked
   }
-  const browser = (navigator.language || "en").slice(0, 2).toLowerCase();
-  return CODES.includes(browser) ? browser : "en";
+  // First visit: use the phone's own language, checking every language it lists in order
+  // (e.g. a phone set to "English (India), Gujarati" opens in English; "Gujarati, English" in Gujarati).
+  const preferred = navigator.languages?.length ? navigator.languages : [navigator.language || "en"];
+  for (const tag of preferred) {
+    const code = String(tag).slice(0, 2).toLowerCase();
+    if (CODES.includes(code)) return code;
+  }
+  return "en";
 }
 
 let current = initialLang();
