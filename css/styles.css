@@ -179,7 +179,7 @@ main { flex: 1; display: flex; flex-direction: column; justify-content: flex-sta
   font-size: 15px; font-weight: 600; letter-spacing: 0; color: var(--green);
 }
 .required { color: #b91c1c; }
-.counter { font: 500 13px var(--sans); font-variant-numeric: tabular-nums; color: var(--gold-text); letter-spacing: 0; }
+.counter { white-space: nowrap; font: 500 13px var(--sans); font-variant-numeric: tabular-nums; color: var(--gold-text); letter-spacing: 0; }
 
 .input {
   width: 100%;
@@ -355,7 +355,15 @@ main { flex: 1; display: flex; flex-direction: column; justify-content: flex-sta
 
 /* ---------- Language switch ---------- */
 
-.lang-switch { display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; }
+.top-tools { display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.lang-switch { display: flex; justify-content: center; gap: 6px; }
+.big-text-btn {
+  min-width: 40px; min-height: 36px; padding: 0 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--gold-line); background: var(--ivory); color: var(--green); font: 700 15px var(--sans);
+}
+.big-text-btn[aria-pressed="true"] { background: var(--green); color: var(--ivory); border-color: var(--green); }
+/* Larger text mode: scales the whole page, so every size grows together */
+html.big-text body { zoom: 1.2; }
 .lang-switch button {
   padding: 6px 14px; min-height: 36px; border-radius: 999px; cursor: pointer;
   border: 1px solid var(--gold-line); background: var(--ivory); color: var(--green);

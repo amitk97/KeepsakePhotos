@@ -8,6 +8,7 @@ import { $ } from "./ui/dom.js";
 import { initCompare } from "./ui/compare.js";
 import { initBackgrounds } from "./ui/backgrounds.js";
 import { chooseLang, initLangSwitch, toggleLangs } from "./ui/langSwitch.js";
+import { initBigText, toggleBigText } from "./ui/bigText.js";
 import { initTodayCount } from "./ui/todayCount.js";
 import { loadDesign } from "./ui/design.js";
 import { closeLiveCamera } from "./media/camera.js";
@@ -22,6 +23,7 @@ const actions = {
   begin: () => goToStep(2),
   lang: chooseLang,
   "lang-toggle": toggleLangs,
+  "big-text": toggleBigText,
   "flip-camera": photo.flipCamera,
   "close-camera": photo.closeCamera,
   capture: photo.capturePhoto,
@@ -50,6 +52,7 @@ applyTranslations();
 initCompare();
 initBackgrounds();
 initLangSwitch();
+initBigText();
 initTodayCount();
 loadDesign();
 // Wording changed on the admin page arrives a moment later.
