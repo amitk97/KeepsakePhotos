@@ -111,14 +111,12 @@ main { flex: 1; display: flex; flex-direction: column; justify-content: flex-sta
 .lead { font-size: 14px; line-height: 1.6; color: var(--muted); max-width: 28rem; margin-inline: auto; }
 
 .monogram {
-  width: 64px; height: 64px; margin: 0 auto;
+  width: 96px; height: 96px; margin: 0 auto;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: var(--ivory); color: var(--green);
-  border: 1px solid var(--gold);
-  box-shadow: 0 0 0 4px var(--ivory), 0 0 0 5px var(--gold); /* a fine double gold ring */
-  font-family: var(--serif); font-style: italic; font-size: 1.6rem; letter-spacing: 0.02em;
+  color: var(--gold-text);
 }
+.monogram svg { width: 100%; height: 100%; overflow: visible; }
 
 @keyframes subtleGlow {
   0%, 100% { box-shadow: 0 0 15px rgba(184, 155, 98, 0.2); }
@@ -194,6 +192,7 @@ main { flex: 1; display: flex; flex-direction: column; justify-content: flex-sta
 .input::placeholder { color: rgba(29, 59, 45, 0.62); }
 
 .hint { font-size: 12px; font-weight: 500; color: var(--muted); margin: 10px 0 6px; }
+#submitHint { text-align: center; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
