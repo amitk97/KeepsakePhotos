@@ -96,7 +96,7 @@ export function startProgress(messages, intervalMs) {
   let i = 0;
   el.textContent = messages[0];
   const timer = setInterval(() => {
-    i = Math.min(i + 1, messages.length - 1);
+    i = (i + 1) % messages.length; // keep cycling through the fun lines for long waits
     el.textContent = messages[i];
   }, intervalMs);
   return () => clearInterval(timer);
