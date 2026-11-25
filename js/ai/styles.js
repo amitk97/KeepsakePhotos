@@ -4,6 +4,7 @@
 // only the character changes. The admin page's style lab picks the one every guest gets.
 
 const KEEP_RULES =
+  "Fit everyone fully inside the picture: show the whole head and hair of every person with clear empty space above the tallest head, and never crop heads, hair, hands or feet at the edges. " +
   "Keep every person clearly recognisable: same face shape, skin tone, hair, beard and expression. " +
   "Paint only the people who are in the photo, exactly as many as there are: never add anyone. If there are several people, include every one of them, each equally recognisable. " +
   "Keep their outfits exactly the same: identical colours, fabrics, textures, sheen, patterns, embroidery, borders, " +
@@ -22,6 +23,7 @@ export const STYLE_VARIANTS = [
     prompt:
       "Turn this photo into a classic caricature painted in watercolour, like a caricature artist at a wedding. " +
       "Show the whole person from head to feet. Make the head huge, about as big as the rest of the body, on a small, cute body. " +
+      "Give every person in the picture the same caricature treatment: each one gets the big head and small body, not just one of them. " +
       "Strongly exaggerate each person's most distinctive features (smile, eyebrows, hair, beard, nose, cheeks) in a fun, flattering way. " +
       "Replace the background with plain paper; keep only a hint of the setting. " +
       KEEP_RULES +
