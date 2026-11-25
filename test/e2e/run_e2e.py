@@ -206,7 +206,12 @@ def main():
             assert page.get_attribute("html", "lang") == "gu"
             page.screenshot(path=OUT / "1b-gujarati.png")
             audit(page, "welcome (Gujarati)")
+            # After choosing, the switcher shrinks to one globe button; tapping it shows all three again
+            expect(page.locator("#langToggle")).to_be_visible()
+            expect(page.locator("[data-lang=en]")).to_be_hidden()
+            page.click("#langToggle")
             page.click("[data-lang=en]")
+            expect(page.locator("#langToggle")).to_contain_text("English")
             expect(page.locator("#step1 h2")).to_have_text("Create Your Watercolour Wedding Portrait")
             page.click("[data-action=begin]")
             expect(page.locator("#step2")).to_be_visible()

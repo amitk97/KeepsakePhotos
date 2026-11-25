@@ -2,11 +2,12 @@
 // (the photo buttons are labels, wired in flows/photoInput.js);
 // this table maps each one to a function. The work itself lives in flows/.
 
-import { applyTranslations, setLang } from "./i18n/index.js";
+import { applyTranslations } from "./i18n/index.js";
 import { state } from "./state.js";
 import { $ } from "./ui/dom.js";
 import { initCompare } from "./ui/compare.js";
 import { initBackgrounds } from "./ui/backgrounds.js";
+import { chooseLang, initLangSwitch, toggleLangs } from "./ui/langSwitch.js";
 import { initTodayCount } from "./ui/todayCount.js";
 import { loadDesign } from "./ui/design.js";
 import { closeLiveCamera } from "./media/camera.js";
@@ -19,7 +20,8 @@ import { initForm, renderChips, resetApp } from "./flows/form.js";
 
 const actions = {
   begin: () => goToStep(2),
-  lang: (el) => setLang(el.dataset.lang),
+  lang: chooseLang,
+  "lang-toggle": toggleLangs,
   "flip-camera": photo.flipCamera,
   "close-camera": photo.closeCamera,
   capture: photo.capturePhoto,
@@ -47,6 +49,7 @@ initForm();
 applyTranslations();
 initCompare();
 initBackgrounds();
+initLangSwitch();
 initTodayCount();
 loadDesign();
 // Wording changed on the admin page arrives a moment later.

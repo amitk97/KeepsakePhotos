@@ -6,7 +6,7 @@
 const KEEP_RULES =
   "Fit everyone fully inside the picture: show the whole head and hair of every person with clear empty space above the tallest head, and never crop heads, hair, hands or feet at the edges. " +
   "Keep every person clearly recognisable: same face shape, skin tone, hair, beard and expression. " +
-  "Keep everyone in their original positions relative to each other. " +
+  "Keep everyone in their original positions relative to each other, and keep their real relative heights (children smaller, tall people taller) so family photos look natural. " +
   "Keep each person's pose: anyone standing stays standing and anyone sitting stays sitting. " +
   "Keep any jewellery, mehndi, glasses and turbans exactly as they are. " +
   "Keep natural, true skin tones with no colour cast from the background. " +

@@ -53,14 +53,25 @@ export function applyTranslations(root = document) {
   root.querySelectorAll("[data-lang]").forEach((el) => el.setAttribute("aria-pressed", String(el.dataset.lang === current)));
 }
 
+// True once the guest has picked a language themselves (then the switcher can shrink).
+export function hasChosenLang() {
+  try {
+    return CODES.includes(localStorage.getItem(STORAGE_KEY));
+  } catch {
+    return false;
+  }
+}
+
 export function setLang(code) {
-  if (!CODES.includes(code) || code === current) return;
+  if (!CODES.includes(code)) return;
+  const changed = code !== current;
   current = code;
   try {
     localStorage.setItem(STORAGE_KEY, code);
   } catch {
     // storage blocked
   }
+  if (!changed) return; // tapping the current language just saves the choice
   applyTranslations();
   listeners.forEach((fn) => fn(code));
 }
