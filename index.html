@@ -37,6 +37,21 @@
                 <h2 tabindex="-1" data-i18n="welcomeTitle">Create Your Watercolour Wedding Portrait</h2>
                 <p class="lead" data-i18n="welcomeLead">Take a photo or upload a picture of yourself to receive a custom watercolour caricature keepsake, outfit and all, complete with your personalised message for Pooja &amp; Amit.</p>
             </div>
+            <!-- Example keepsake: shown only once both pictures exist in public/images/ (see the README there). -->
+            <figure id="welcomeSample" class="sample hidden">
+                <div class="sample-pair">
+                    <div class="sample-item">
+                        <img id="sampleBefore" alt="" data-src="images/sample-before.jpg">
+                        <span class="compare-tag left" data-i18n="before">Before</span>
+                    </div>
+                    <svg class="sample-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    <div class="sample-item">
+                        <img id="sampleAfter" alt="" data-src="images/sample-after.jpg">
+                        <span class="compare-tag right" data-i18n="after">After</span>
+                    </div>
+                </div>
+                <figcaption data-i18n="sampleCaption">An example keepsake</figcaption>
+            </figure>
             <button type="button" class="btn btn-primary btn-large" data-action="begin">
                 <span data-i18n="begin">Begin Your Portrait</span>
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>

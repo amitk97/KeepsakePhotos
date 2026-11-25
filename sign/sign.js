@@ -2,6 +2,8 @@
 
 import QRCode, { QRErrorCorrectLevel } from "./qrcode.js";
 
+// The guest page is one folder up from this sign page (works at a root or in a sub-folder like GitHub Pages).
+const siteAddress = () => new URL("../", location.href).href;
 const $ = (id) => document.getElementById(id);
 
 const escapeXml = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -24,7 +26,7 @@ export function qrSvg(text) {
 }
 
 function render() {
-  const url = $("url").value.trim() || `${location.origin}/`;
+  const url = $("url").value.trim() || siteAddress();
   const card = $("size").value === "card";
   const sheet = $("sheet");
   sheet.className = card ? "card" : "";
@@ -37,7 +39,7 @@ function render() {
   }
 }
 
-$("url").value = `${location.origin}/`;
+$("url").value = siteAddress();
 $("url").addEventListener("input", render);
 $("size").addEventListener("change", render);
 $("printBtn").addEventListener("click", () => window.print());
