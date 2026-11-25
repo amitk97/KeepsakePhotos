@@ -20,6 +20,13 @@ import { goToStep } from "./navigation.js";
 
 const canvas = () => ui.$("portraitCanvas");
 
+// Without fetch(), which the site's security policy doesn't allow for data: addresses.
+function dataUrlToBlob(dataUrl) {
+  const [head, data] = dataUrl.split(",");
+  const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+  return new Blob([bytes], { type: head.match(/data:([^;]+)/)?.[1] || "image/jpeg" });
+}
+
 async function blobToImage(blob) {
   const url = URL.createObjectURL(blob);
   const image = await loadImage(url);
@@ -49,7 +56,7 @@ async function paint(requestId) {
   }
 
   // 2. Free artists on Hugging Face.
-  const photo = await (await fetch(state.photoDataUrl)).blob();
+  const photo = dataUrlToBlob(state.photoDataUrl);
   const { blob } = await paintWithFreeArtists(photo, stylePrompt(state.background), {
     onTry: (n, total) => ui.showStatus(n > 1 ? t("tryingArtist", n, total) : ""),
   });

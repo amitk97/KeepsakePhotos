@@ -13,4 +13,5 @@ export function clearPhoto() {
   state.photoBase64 = null;
   state.smallPhotoBase64 = null;
   state.photoDataUrl = null;
+  state.originalPhoto = null;
 }

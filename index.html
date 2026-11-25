@@ -84,7 +84,7 @@
                 </div>
 
                 <div>
-                    <span id="backgroundLabel" class="field-label"><span data-i18n="backgroundLabel">Background Colour</span><span id="backgroundName" class="counter"></span></span>
+                    <span id="backgroundLabel" class="field-label"><span data-i18n="backgroundLabel">Background Colour</span><span class="counter background-name"></span></span>
                     <div id="backgroundChoices" class="swatches" role="radiogroup" aria-labelledby="backgroundLabel"></div>
                 </div>
 
@@ -192,6 +192,10 @@
                 </div>
                 <p class="hint" data-i18n="compareHint">Slide to compare</p>
             </div>
+            <div class="again">
+                <span id="againLabel" class="field-label"><span data-i18n="againLabel">Try another background</span><span class="counter background-name"></span></span>
+                <div class="swatches" role="radiogroup" aria-labelledby="againLabel"></div>
+            </div>
             <div class="btn-grid two">
                 <button type="button" id="shareBtn" class="btn btn-primary btn-large span-2 hidden" data-action="share" data-i18n="share">Save to Photos / Share</button>
                 <button type="button" class="btn btn-primary btn-large" data-action="download">
@@ -199,6 +203,7 @@
                     <span data-i18n="download">Download PNG</span>
                 </button>
                 <button type="button" class="btn btn-secondary btn-large" data-action="regenerate" data-i18n="regenerate">Paint It Again</button>
+                <button type="button" class="btn btn-secondary span-2" data-action="saveOriginal" data-i18n="saveOriginal">Save my original photo</button>
                 <button type="button" class="btn btn-link span-2" data-action="reset" data-i18n="reset">Make another portrait</button>
             </div>
         </section>

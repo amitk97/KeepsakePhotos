@@ -10,7 +10,7 @@ import { initBackgrounds } from "./ui/backgrounds.js";
 import { loadDesign } from "./ui/design.js";
 import { closeLiveCamera } from "./media/camera.js";
 import { loadSiteSettings } from "./services/siteSettings.js";
-import { downloadPortrait, sharePortrait } from "./services/share.js";
+import { downloadOriginal, downloadPortrait, sharePortrait } from "./services/share.js";
 import { goToStep } from "./flows/navigation.js";
 import * as photo from "./flows/photoInput.js";
 import { makePortrait } from "./flows/portrait.js";
@@ -25,6 +25,7 @@ const actions = {
   regenerate: makePortrait,
   share: () => sharePortrait($("portraitCanvas"), state.guestName),
   download: () => downloadPortrait($("portraitCanvas"), state.guestName),
+  saveOriginal: () => downloadOriginal(state.originalPhoto || state.photoDataUrl, state.guestName),
   reset: resetApp,
 };
 
