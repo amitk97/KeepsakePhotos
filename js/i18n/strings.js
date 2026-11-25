@@ -17,7 +17,7 @@ function ordinal(n) {
 export const STRINGS = {
   en: {
     badge: "Wedding Keepsake Studio",
-    venueLine: "Somerset Estate • April 2028",
+    venueLine: "April 2028",
     welcomeEyebrow: "Watercolour Caricature Portrait",
     welcomeTitle: "Create Your Watercolour Wedding Portrait",
     welcomeLead:
@@ -93,7 +93,7 @@ export const STRINGS = {
 
   gu: {
     badge: "લગ્ન યાદગીરી સ્ટુડિયો",
-    venueLine: "સમરસેટ એસ્ટેટ • એપ્રિલ 2028",
+    venueLine: "એપ્રિલ 2028",
     welcomeEyebrow: "વોટરકલર કેરીકેચર પોટ્રેટ",
     welcomeTitle: "તમારું વોટરકલર લગ્ન પોટ્રેટ બનાવો",
     welcomeLead:
@@ -169,7 +169,7 @@ export const STRINGS = {
 
   hi: {
     badge: "विवाह यादगार स्टूडियो",
-    venueLine: "समरसेट एस्टेट • अप्रैल 2028",
+    venueLine: "अप्रैल 2028",
     welcomeEyebrow: "वॉटरकलर कैरिकेचर पोर्ट्रेट",
     welcomeTitle: "अपना वॉटरकलर विवाह पोर्ट्रेट बनाएँ",
     welcomeLead:
