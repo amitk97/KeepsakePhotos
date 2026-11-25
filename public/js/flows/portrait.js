@@ -13,7 +13,6 @@ import { getDesign } from "../ui/design.js";
 import { loadImage } from "../media/photo.js";
 import { fetchQueuePosition, newRequestId, requestCaricature } from "../services/api.js";
 import { sendKeepsakeToHosts, stylePrompt } from "../services/siteSettings.js";
-import { canShareFiles } from "../services/share.js";
 import { paintWithFreeArtists } from "../ai/huggingFace.js";
 import { composePortrait, waitForFonts } from "../portrait/compose.js";
 import { goToStep } from "./navigation.js";
@@ -72,7 +71,6 @@ async function showKeepsake({ image, artUrl, ticket }) {
   showCompare(state.photoDataUrl, artUrl);
   sendKeepsakeToHosts(canvas(), state.guestName, ticket);
   goToStep(4);
-  ui.$("shareBtn").classList.toggle("hidden", !(await canShareFiles(canvas(), state.guestName)));
 }
 
 // Also used by "Paint It Again" and "Try again".

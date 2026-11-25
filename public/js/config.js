@@ -5,7 +5,6 @@ export const WEDDING = {
   coupleNames: "Pooja & Amit",
   venueLine: "", // optional place name; the keepsake adds the date it was made (e.g. "VENUE  •  18 APRIL 2028")
   footerLine: "WITH LOVE & CELEBRATION  •  POOJA & AMIT",
-  fileNamePrefix: "Pooja_Amit_Wedding_Keepsake",
 };
 
 // Your own artwork. Put the files in public/frames/ and set the paths here (see public/frames/README.md).

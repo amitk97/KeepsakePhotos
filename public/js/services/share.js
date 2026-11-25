@@ -2,9 +2,17 @@
 
 import { WEDDING } from "../config.js";
 
+// e.g. "Amit_keepsake_Pooja_and_Amit_wedding.png", easy to find in a photo library.
 export function portraitFileName(guestName) {
-  const safe = (guestName || "guest").replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "").toLowerCase() || "guest";
-  return `${WEDDING.fileNamePrefix}_${safe}.png`;
+  const clean = (text) => text.replace(/&/g, " and ").replace(/[^\p{L}\p{N}]+/gu, "_").replace(/^_|_$/g, "");
+  const guest = clean(guestName || "") || "Guest";
+  return `${guest}_keepsake_${clean(WEDDING.coupleNames)}_wedding.png`;
+}
+
+// e.g. "Amit's keepsake from Pooja & Amit's wedding"
+export function shareTitle(guestName) {
+  const who = (guestName || "").trim();
+  return who ? `${who}'s keepsake from ${WEDDING.coupleNames}'s wedding` : `My keepsake from ${WEDDING.coupleNames}'s wedding`;
 }
 
 export function canvasToBlob(canvas) {
@@ -28,10 +36,18 @@ export async function canShareFiles(canvas, guestName) {
   }
 }
 
+// Shares the picture itself where the phone allows it (WhatsApp, Messages, Save to Photos…);
+// otherwise shares a link to the site, and failing that saves the picture.
 export async function sharePortrait(canvas, guestName) {
-  const file = await portraitFile(canvas, guestName);
+  const title = shareTitle(guestName);
   try {
-    await navigator.share({ files: [file], title: `My ${WEDDING.coupleNames} wedding portrait` });
+    if (await canShareFiles(canvas, guestName)) {
+      await navigator.share({ files: [await portraitFile(canvas, guestName)], title, text: title });
+    } else if (navigator.share) {
+      await navigator.share({ title, text: `${title}. Make yours:`, url: new URL("./", location.href).href });
+    } else {
+      await downloadPortrait(canvas, guestName);
+    }
   } catch (err) {
     if (err.name !== "AbortError") await downloadPortrait(canvas, guestName);
   }

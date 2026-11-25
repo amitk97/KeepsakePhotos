@@ -279,7 +279,7 @@ def main():
 
             with page.expect_download() as dl:
                 page.click("[data-action=download]")
-            assert dl.value.suggested_filename == "Pooja_Amit_Wedding_Keepsake_maya_arjun.png"
+            assert dl.value.suggested_filename == "Maya_and_Arjun_keepsake_Pooja_and_Amit_wedding.png"
 
             # Paint it again reuses the same photo.
             before = len(FakeGemini.requests)

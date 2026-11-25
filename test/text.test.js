@@ -35,6 +35,6 @@ test("clampLines limits lines and marks the cut", () => {
 });
 
 test("portrait file names are safe", () => {
-  assert.equal(portraitFileName("Maya & Arjun"), "Pooja_Amit_Wedding_Keepsake_maya_arjun.png");
-  assert.equal(portraitFileName("😀"), "Pooja_Amit_Wedding_Keepsake_guest.png");
+  assert.equal(portraitFileName("Maya & Arjun"), "Maya_and_Arjun_keepsake_Pooja_and_Amit_wedding.png");
+  assert.equal(portraitFileName("😀"), "Guest_keepsake_Pooja_and_Amit_wedding.png");
 });

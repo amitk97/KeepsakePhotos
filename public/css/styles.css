@@ -1,6 +1,7 @@
 /* Pooja & Amit keepsake: estate green, muted gold, ivory. */
 
 :root {
+  color-scheme: only light; /* keep the cream look in dark mode */
   --ivory: #faf6ee;
   --parchment: #f4eee1;
   --green: #1d3b2d;
