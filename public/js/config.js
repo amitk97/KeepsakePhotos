@@ -22,14 +22,14 @@ export const THEME = {
 };
 
 export const SETTINGS = {
-  apiEndpoint: "/api/generate",
+  apiEndpoint: "api/generate", // relative, so the site also works from a sub-folder (GitHub Pages)
   requestTimeoutMs: 200_000,
   smallPhotoEdge: 496, // copy for the free Cloudflare engine (needs under 512px)
   maxPhotoEdge: 1536, // enough detail for fabric texture, small enough to upload quickly
   photoQuality: 0.9,
   maxFileBytes: 30 * 1024 * 1024,
   maxMessageLength: 60,
-  heicConverterUrl: "/vendor/heic2any.min.js", // MIT licence, see public/vendor/
+  heicConverterUrl: "vendor/heic2any.min.js", // MIT licence, see public/vendor/
   progressIntervalMs: 7000,
   queuePollMs: 2500,
   secondsPerPortrait: 25, // rough wait per guest ahead in line

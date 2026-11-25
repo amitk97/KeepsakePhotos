@@ -4,13 +4,20 @@
 import { WEDDING } from "../config.js";
 import { setOverrides } from "../i18n/index.js";
 import { deviceId } from "./api.js";
+import { DEFAULT_STYLE, styleById } from "../ai/styles.js";
 
 let uploadsEnabled = false;
+let styleVariant = DEFAULT_STYLE;
+
+// The instructions for the AI: the style chosen in the admin page's style lab, or the default.
+export function stylePrompt() {
+  return styleById(styleVariant).prompt;
+}
 
 export async function loadSiteSettings() {
   let s;
   try {
-    const res = await fetch("/api/settings", { cache: "no-store" });
+    const res = await fetch("api/settings", { cache: "no-store" });
     if (!res.ok) return;
     s = await res.json();
   } catch {
@@ -30,6 +37,7 @@ export async function loadSiteSettings() {
   }
   setOverrides(overrides);
   uploadsEnabled = Boolean(s.uploadsEnabled);
+  if (s.styleVariant) styleVariant = s.styleVariant;
 }
 
 // Sends the finished keepsake to the hosts' shared folder. Does nothing until Google Drive is connected.
@@ -37,7 +45,7 @@ export async function loadSiteSettings() {
 export async function sendKeepsakeToHosts(canvas, guestName, ticket) {
   if (!uploadsEnabled || !ticket) return;
   try {
-    await fetch("/api/keepsake", {
+    await fetch("api/keepsake", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Device-Id": deviceId() },
       body: JSON.stringify({ image: canvas.toDataURL("image/png"), guestName, ticket }),

@@ -145,7 +145,10 @@ describe("security headers", () => {
       const csp = res.headers.get("content-security-policy");
       assert.match(csp, /default-src 'self'/);
       assert.match(csp, /frame-ancestors 'none'/);
-      assert.doesNotMatch(csp, /unsafe-inline|unsafe-eval|https:/);
+      assert.doesNotMatch(csp, /unsafe-inline|unsafe-eval/);
+      // The only outside hosts allowed are the free Hugging Face artists.
+      for (const host of csp.match(/https:[^\s;]+/g) || []) assert.equal(host, "https://*.hf.space");
+      assert.match(csp, /script-src 'self';/);
       assert.equal(res.headers.get("x-frame-options"), "DENY");
     });
   });

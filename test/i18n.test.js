@@ -50,7 +50,7 @@ test("offline worker saves every page file", () => {
       return statSync(p).isDirectory() ? walk(p) : [p];
     });
   for (const file of walk(path.join(ROOT, "public/js"))) {
-    const url = "/" + path.relative(path.join(ROOT, "public"), file).split(path.sep).join("/");
+    const url = "./" + path.relative(path.join(ROOT, "public"), file).split(path.sep).join("/");
     assert.ok(sw.includes(`"${url}"`), `${url} missing from sw.js SHELL`);
   }
 });

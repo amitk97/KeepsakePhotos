@@ -130,8 +130,8 @@ export function createSettingsStore({ defaults, file = "", backups = [], logger 
 
     // What guests' phones need (nothing private).
     publicView(extra = {}) {
-      const { coupleNames, keepsakeVenueLine, keepsakeFooterLine, siteVenueLine, presets } = current;
-      return { coupleNames, keepsakeVenueLine, keepsakeFooterLine, siteVenueLine, presets, ...extra };
+      const { coupleNames, keepsakeVenueLine, keepsakeFooterLine, siteVenueLine, presets, styleVariant } = current;
+      return { coupleNames, keepsakeVenueLine, keepsakeFooterLine, siteVenueLine, presets, styleVariant, ...extra };
     },
   };
 }

@@ -44,6 +44,7 @@ export function initPhotoButtons() {
   }
   ui.$("fileInput").addEventListener("change", onFileChosen);
   ui.$("nativeCameraInput").addEventListener("change", onFileChosen);
+  initDragAndDrop();
 }
 
 // Shutter button on the laptop preview.
@@ -68,6 +69,39 @@ export const closeCamera = () => camera.closeLiveCamera();
 export async function onFileChosen(event) {
   const file = event.target.files[0];
   event.target.value = ""; // allow picking the same file again
+  await usePhotoFile(file);
+}
+
+// Drag and drop: a photo dropped anywhere on the page is used, while the guest is on the form.
+function initDragAndDrop() {
+  const zone = ui.$("photoDropZone");
+  const hasFiles = (e) => [...(e.dataTransfer?.types || [])].includes("Files");
+  let depth = 0;
+  const highlight = (on) => zone.classList.toggle("dragging", on);
+  document.addEventListener("dragenter", (e) => {
+    if (!hasFiles(e) || state.busy) return;
+    depth++;
+    highlight(true);
+  });
+  document.addEventListener("dragleave", () => {
+    if (depth > 0 && --depth === 0) highlight(false);
+  });
+  document.addEventListener("dragover", (e) => {
+    if (hasFiles(e)) e.preventDefault(); // allow dropping
+  });
+  document.addEventListener("drop", (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); // don't let the browser open the image
+    depth = 0;
+    highlight(false);
+    if (state.busy) return;
+    const file = [...e.dataTransfer.files].find((f) => f.type.startsWith("image/") || /\.hei[cf]$/i.test(f.name));
+    if (file) usePhotoFile(file);
+    else ui.showError(t("errUnreadable"));
+  });
+}
+
+async function usePhotoFile(file) {
   if (!file) return;
 
   ui.hideError();

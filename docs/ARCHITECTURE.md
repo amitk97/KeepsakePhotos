@@ -16,7 +16,7 @@ flowchart LR
   Server -.->|optional| Drive["Google Drive"]
   Server -.->|settings| Store["Modal settings store"]
   Server -->|painting| Phone
-  Phone -.->|no AI free| Filter["On-phone watercolour<br/>public/js/fallback/"]
+  Phone -.->|server busy or absent| HF["Free Hugging Face artists<br/>public/js/ai/"]
 ```
 
 ## A portrait, step by step
@@ -27,7 +27,7 @@ flowchart LR
 4. **Server** (`engines/chain.js`) tries each engine in order: `engines/cloudflare.js`, then `engines/flux.js`. One that is out of allowance, failing or busy is skipped and rested.
 5. Small paintings are doubled by `engines/upscaler.js` (optional).
 6. **Phone** lays out the keepsake on a canvas (`portrait/compose.js`), shows the before/after slider and sends the keepsake to Drive (`services/siteSettings.js` → `/api/keepsake`, only with a one-time ticket).
-7. If the server says no AI is free (or the phone is offline), the phone paints `fallback/watercolour.js` itself.
+7. If the server has no artist free (or there is no server, as on GitHub Pages), the phone asks the free FLUX Kontext Spaces on Hugging Face in turn (`ai/huggingFace.js`, list in `ai/spaces.js`). If all are busy, the guest is asked to try again; their photo and words are kept.
 
 ## Server (`server/`)
 
@@ -57,7 +57,7 @@ services/        talking to the server and saving: api, siteSettings, drafts, sh
 media/           camera and photo handling
 ui/              screen helpers (dom), before/after slider, your frame/monogram
 portrait/        drawing the keepsake on a canvas (layout, shapes, text wrapping)
-fallback/        the free on-phone watercolour
+ai/              styles (the AI instructions) and the free Hugging Face artists
 i18n/            every word guests see, in English, Gujarati and Hindi
 ```
 

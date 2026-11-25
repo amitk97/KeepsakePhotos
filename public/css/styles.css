@@ -403,3 +403,9 @@ main { flex: 1; display: flex; flex-direction: column; justify-content: center; 
 @media (prefers-contrast: more) {
   :root { --muted: var(--green); --gold-line: var(--gold-text); }
 }
+
+/* Drag and drop a photo (computers and tablets with a mouse or trackpad) */
+.drop-zone { border: 2px dashed transparent; border-radius: 1.25rem; padding: 0.25rem; transition: border-color .2s, background-color .2s; }
+.drop-zone.dragging { border-color: var(--gold, #a8843a); background: rgba(168, 132, 58, 0.08); }
+.drop-hint { display: none; margin: 0.6rem 0 0; text-align: center; font-size: 0.9rem; opacity: 0.75; }
+@media (hover: hover) and (pointer: fine) { .drop-hint { display: block; } }

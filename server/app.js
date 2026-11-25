@@ -10,15 +10,16 @@ import { sendJson } from "./lib/http.js";
 
 const PUBLIC_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
 
-// Everything (code, styles, fonts) comes from this site only; nothing may embed it in a frame.
+// Code, styles and fonts come from this site only; the phone may also talk to the free Hugging Face
+// artists (*.hf.space). Nothing may embed the site in a frame.
 const CSP = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self'",
   "font-src 'self'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://*.hf.space",
   "media-src 'self' blob:",
-  "connect-src 'self'",
+  "connect-src 'self' https://*.hf.space",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "object-src 'none'",

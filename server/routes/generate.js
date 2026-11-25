@@ -2,7 +2,7 @@
 //   headers: X-Request-Id (optional, lets the guest poll their place in line)
 //   body:    { image: <base64 JPEG ≤1536px>, smallImage?: <base64 JPEG <512px>, mimeType }
 // 200 → { image: "data:image/png;base64,...", engine, keepsakeTicket }
-// 503 + { fallback: "filter" } → no AI engine available: the phone paints a free watercolour itself.
+// 503 + { fallback: "client" } → no server engine available: the phone asks the free Hugging Face artists.
 
 import { randomUUID } from "node:crypto";
 import { HttpError, clientIp, deviceId, readJsonBody, sendJson } from "../lib/http.js";
@@ -21,10 +21,10 @@ const SMALL_MAX = 1_000_000;
 // a whole venue on one Wi-Fi shares an address. tickets: one-time keepsake upload tickets.
 export function createGenerateHandler({ config, provider, rateLimiter, ipLimiter, queue, portraitsToday, settings, tickets, upscaler = null, logger = console }) {
   const current = () => (settings ? settings.get() : config);
-  // The phone paints the watercolour itself; the ticket still lets that keepsake reach the hosts' Drive.
-  const useFilter = (res, reason, error) =>
+  // The phone tries the free artists itself; the ticket still lets that keepsake reach the hosts' Drive.
+  const useClient = (res, reason, error) =>
     sendJson(res, 503, {
-      fallback: "filter",
+      fallback: "client",
       reason,
       error: error || "Our AI artists are resting.",
       keepsakeTicket: tickets ? tickets.issue() : undefined,
@@ -54,19 +54,19 @@ export function createGenerateHandler({ config, provider, rateLimiter, ipLimiter
       return sendJson(res, 400, { error: "Unsupported photo type." });
     }
 
-    // No AI today? The phone paints the free watercolour (doesn't count against the guest's limit).
+    // No server AI right now? The phone asks the free artists (doesn't count against the guest's limit).
     const { studioOpen, dailyPortraitCap, styleVariant } = current();
-    if (!studioOpen) return useFilter(res, "closed");
+    if (!studioOpen) return useClient(res, "closed");
     if (!provider.configured) {
       logger.error("No image engine is configured (check CLOUDFLARE_*, FLUX_*, GEMINI_API_KEY)");
-      return useFilter(res, "not-configured");
+      return useClient(res, "not-configured");
     }
-    if (portraitsToday.get() >= dailyPortraitCap) return useFilter(res, "daily-cap");
+    if (portraitsToday.get() >= dailyPortraitCap) return useClient(res, "daily-cap");
 
     const ip = clientIp(req, config.trustProxy);
     const guestKey = deviceId(req) || `ip:${ip}`;
-    // Whole address over its (high) limit: give the free on-phone watercolour rather than block anyone.
-    if (ipLimiter && !ipLimiter.take(ip).allowed) return useFilter(res, "busy");
+    // Whole address over its (high) limit: let the phone use the free artists rather than block anyone.
+    if (ipLimiter && !ipLimiter.take(ip).allowed) return useClient(res, "busy");
     const slot = rateLimiter.take(guestKey);
     if (!slot.allowed) {
       ipLimiter?.refund(ip);
@@ -112,13 +112,13 @@ export function createGenerateHandler({ config, provider, rateLimiter, ipLimiter
         return;
       }
       if (err instanceof QueueFullError) {
-        logger.warn("Queue full: sending a guest the on-phone watercolour");
-        return useFilter(res, "busy");
+        logger.warn("Queue full: sending a guest to the free artists");
+        return useClient(res, "busy");
       }
       logger.error("Generation failed:", err.message);
-      if (err instanceof NoImageError) return useFilter(res, "rejected", "The AI artist couldn't paint this photo.");
-      if (err instanceof AllEnginesUnavailableError) return useFilter(res, "unavailable");
-      return useFilter(res, "error");
+      if (err instanceof NoImageError) return useClient(res, "rejected", "The AI artist couldn't paint this photo.");
+      if (err instanceof AllEnginesUnavailableError) return useClient(res, "unavailable");
+      return useClient(res, "error");
     }
   };
 }
