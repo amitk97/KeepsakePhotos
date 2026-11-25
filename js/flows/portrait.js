@@ -71,6 +71,15 @@ async function showKeepsake({ image, artUrl, ticket }) {
   showCompare(state.photoDataUrl, artUrl);
   sendKeepsakeToHosts(canvas(), state.guestName, ticket);
   goToStep(4);
+  revealPainting();
+}
+
+// The keepsake appears like a watercolour wash spreading across the paper.
+function revealPainting() {
+  const el = canvas();
+  el.classList.remove("reveal");
+  void el.offsetWidth; // restart the animation for "Paint It Again"
+  el.classList.add("reveal");
 }
 
 // Also used by "Paint It Again" and "Try again".
