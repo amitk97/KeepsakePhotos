@@ -96,13 +96,18 @@ async function paintWith(space, photoBlob, prompt) {
 // onTry(index, total, space) is called before each artist, for progress messages.
 export async function paintWithFreeArtists(photoBlob, prompt, { onTry = () => {} } = {}) {
   const spaces = activeSpaces();
+  let quotaUsed = false;
   for (let i = 0; i < spaces.length; i++) {
     onTry(i + 1, spaces.length, spaces[i]);
     try {
       return { blob: await paintWith(spaces[i], photoBlob, prompt), artist: spaces[i].name };
     } catch (err) {
       console.warn(`Free artist "${spaces[i].name}" couldn't paint:`, err.message);
+      if (/quota/i.test(err.message)) quotaUsed = true;
     }
   }
-  throw new AllArtistsBusyError("No free artist could paint right now");
+  const err = new AllArtistsBusyError("No free artist could paint right now");
+  // The free allowance is per internet connection and shared by every artist, so say so.
+  err.code = quotaUsed ? "errFreeQuota" : "errAllBusy";
+  throw err;
 }

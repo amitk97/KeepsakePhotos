@@ -87,6 +87,7 @@ export const STRINGS = {
     errRateLimit: "You've made lots of portraits! Please wait a little while before making another.",
     errGeneric: "Something went wrong. Please try again.",
     errAllBusy: "All our artists are busy right now. Your photo is saved: tap \"Create My Portrait\" again in a minute.",
+    errFreeQuota: "The free painting allowance for this internet connection is used up for now. Try again later, or switch between Wi-Fi and mobile data.",
     tryingArtist: (n, total) => `Asking another artist (${n} of ${total})…`,
   },
 
@@ -162,6 +163,7 @@ export const STRINGS = {
     errRateLimit: "તમે ઘણાં પોટ્રેટ બનાવ્યાં! કૃપા કરીને થોડી વાર પછી ફરી પ્રયાસ કરો.",
     errGeneric: "કંઈક ખોટું થયું. કૃપા કરીને ફરી પ્રયાસ કરો.",
     errAllBusy: "અમારા બધા કલાકારો અત્યારે વ્યસ્ત છે. તમારો ફોટો સચવાયેલો છે: એક મિનિટ પછી ફરી \"મારું પોટ્રેટ બનાવો\" ટેપ કરો.",
+    errFreeQuota: "આ ઇન્ટરનેટ કનેક્શન માટે મફત પેઇન્ટિંગની મર્યાદા હાલ પૂરી થઈ ગઈ છે. પછી ફરી પ્રયાસ કરો, અથવા Wi-Fi અને મોબાઇલ ડેટા વચ્ચે બદલો.",
     tryingArtist: (n, total) => `બીજા કલાકારને પૂછી રહ્યા છીએ (${total} માંથી ${n})…`,
   },
 
@@ -237,6 +239,7 @@ export const STRINGS = {
     errRateLimit: "आपने बहुत सारे पोर्ट्रेट बना लिए! कृपया थोड़ी देर बाद फिर कोशिश करें।",
     errGeneric: "कुछ गड़बड़ हो गई। कृपया फिर से कोशिश करें।",
     errAllBusy: "हमारे सभी कलाकार अभी व्यस्त हैं। आपकी फ़ोटो सेव है: एक मिनट बाद फिर से \"मेरा पोर्ट्रेट बनाएँ\" टैप करें।",
+    errFreeQuota: "इस इंटरनेट कनेक्शन के लिए मुफ़्त पेंटिंग की सीमा अभी पूरी हो गई है। बाद में फिर कोशिश करें, या Wi-Fi और मोबाइल डेटा के बीच बदलें।",
     tryingArtist: (n, total) => `दूसरे कलाकार से पूछ रहे हैं (${total} में से ${n})…`,
   },
 };
