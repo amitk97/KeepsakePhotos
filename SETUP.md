@@ -2,7 +2,9 @@
 
 About 40 minutes, all in a web browser. Nothing to install.
 
-**How portraits get painted:** Cloudflare (free, ~80 a day) → Modal FLUX (free $30 credit a month) → if both are unavailable, the guest's own phone paints a simpler watercolour. Guests always get a portrait.
+**How portraits get painted:** Cloudflare (free, ~80 a day) → Modal FLUX (free $30 credit a month) → if both are busy or not set up, the guest's phone asks free public artists on Hugging Face. Those share a small free allowance per internet connection, so on venue Wi-Fi they're only a backup: set up Cloudflare and Modal for the day.
+
+**Just want to try it?** The test site needs no setup: <https://amitk97.github.io/KeepsakePhotos/>.
 
 ## Checklist
 
@@ -84,8 +86,9 @@ Make a long random string, 40+ characters (e.g. <https://www.random.org/strings/
 
 At `/admin` you can:
 - see portraits made today, the queue, each AI engine's status and free allowance, and recent problems;
-- switch the AI studio off (guests then get the on-phone watercolour);
-- change the daily cap, the wording printed on keepsakes, the website venue line and the message suggestions (English, Gujarati, Hindi);
+- switch the AI studio off (guests' phones then use the free Hugging Face artists);
+- change the daily cap, the wording printed on keepsakes (an optional venue goes before the automatic date), the website venue line and the message suggestions (English, Gujarati, Hindi);
+- see how many keepsakes were made today (guests see this count on the welcome page too; it resets each night);
 - run the **wedding-day test** and the **style lab**;
 - open the **printable QR sign** (A4 poster or 4 table cards).
 
@@ -121,7 +124,8 @@ The app can only see files and the folder it created, nothing else in your Drive
 | Problem | Fix |
 |---|---|
 | Admin test: an engine "Not set up" | Its values are missing on Render (see the table above) |
-| Guests got the "quick watercolour" note | All AI engines were busy or out of allowance. Check the admin page's engine table |
+| Guests see "All our artists are busy" | Your engines were busy or not set up, and the free artists were too. Check the admin page's engine table |
+| Guests see "free painting allowance … used up" | The free Hugging Face artists' allowance for that connection ran out. Set up Cloudflare/Modal, or wait |
 | FLUX fails with 401 | The two copies of value ② (Modal secret and Render) don't match |
 | Modal log: "gated repo" / 403 | Accept the FLUX licence (step 1.2) with the same account as your token |
 | GitHub "Deploy" says Modal keys not added | Add `MODAL_TOKEN_ID` / `MODAL_TOKEN_SECRET` (step 4.1) |

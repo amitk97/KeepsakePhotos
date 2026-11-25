@@ -9,8 +9,11 @@ Each recipe names the exact file. After any change: `npm run check && npm test`,
 | Couple names, venue/date line, bottom line on keepsakes | Admin page → *Wording and limits* (no code). Permanent default: `WEDDING` in `public/js/config.js` |
 | Any text guests read (buttons, tips, errors, messages) | `public/js/i18n/strings.js`: change it in all three languages |
 | Message suggestions | Admin page, or `presets` in `public/js/i18n/strings.js` |
-| The wedding date | Admin page (keepsake and website lines), or `config.js` + `venueLine` in `strings.js` |
+| The date on keepsakes | Automatic: the day each keepsake is made (`keepsakeDateLine` in `public/js/portrait/compose.js`). The website header date is `venueLine` in `strings.js` |
 | The QR sign wording | `public/sign/index.html` |
+| Waiting messages | `progress` in `strings.js` (all three languages) |
+| Photo tips (dark, blurry, no face) and how fussy they are | Text: `photo_…` in `strings.js`. Limits: `LIMITS` in `public/js/media/photoCheck.js` |
+| Saved file names and the share message | `portraitFileName` and `shareTitle` in `public/js/services/share.js` |
 
 ## Look and feel
 
@@ -19,16 +22,18 @@ Each recipe names the exact file. After any change: `npm run check && npm test`,
 | Colours | `:root` at the top of `public/css/styles.css`, and `THEME` in `public/js/config.js` (keepsake) |
 | Fonts | `public/css/fonts.css` (files in `public/fonts/`) |
 | The keepsake layout (positions, sizes) | `public/js/portrait/compose.js` |
-| Use our own frame or monogram | See `public/frames/README.md`, then set `DESIGN` in `public/js/config.js` |
-| The painting style / AI instructions | `public/js/ai/styles.js` |
-| Which free Hugging Face artists are tried, and in what order | `public/js/ai/spaces.js` |
+| Use our own frame or monogram | See `public/frames/README.md`, then set `DESIGN` in `public/js/config.js`. The welcome-page wreath monogram is the SVG in `#welcomeMonogram` in `index.html` |
+| The watercolour reveal and shake animations | End of `public/css/styles.css` (`washIn`, `shake`) |
+| Larger-text size | `html.big-text body { zoom: … }` in `styles.css` |
 
 ## The AI
 
 | I want to… | Where |
 |---|---|
-| Change how portraits are painted | `server/engines/styles.js`: edit a style's `prompt`, then try it in the admin page's style lab |
-| Add a new watercolour style | Add an entry to `STYLE_VARIANTS` in `server/engines/styles.js`. It appears in the style lab automatically |
+| Change how portraits are painted (rules for heads, poses, outfits…) | `public/js/ai/styles.js` (shared by the phone and the server): edit `KEEP_RULES` or a style's `prompt`, then try it in the admin page's style lab |
+| Add a new style | Add an entry to `STYLE_VARIANTS` in `public/js/ai/styles.js`. It appears in the style lab automatically |
+| Background colours guests can pick | `BACKGROUNDS` in `public/js/ai/styles.js` (add the name in all three languages as `bg_<id>` in `strings.js`) |
+| Which free Hugging Face artists are tried, in what order, and their settings | `public/js/ai/spaces.js` |
 | Change which engine goes first | `IMAGE_PROVIDERS` on Render, e.g. `flux,cloudflare` |
 | Change FLUX settings (steps, size, GPU) | Top of `flux-service/flux_app.py`, then GitHub → Actions → Deploy FLUX to Modal |
 | Add a new AI engine | 1. Copy `server/engines/flux.js` to a new file with `createCaricature()` and `configured`. 2. Add a branch for it in `buildProvider` in `server/engines/index.js`. 3. Add its settings in `server/config.js`. 4. Add tests like `test/providers.test.js` |
@@ -41,13 +46,14 @@ Each recipe names the exact file. After any change: `npm run check && npm test`,
 | Portraits per phone per hour, queue length, how many painted at once | Render settings: `RATE_LIMIT_PER_HOUR`, `MAX_WAITING`, `MAX_CONCURRENT` (defaults in `server/config.js`) |
 | Photo size sent to the AI | `maxPhotoEdge` in `public/js/config.js` |
 | Wait times and progress messages | `SETTINGS` in `public/js/config.js`; messages are `progress` in `strings.js` |
+| How many "painted" reports a phone may send for today's count | `paintedPerPhone` / `paintedPerAddress` in `server/services.js` |
 
 ## Adding things
 
 | I want to add… | How |
 |---|---|
 | A new button | Add `data-action="my-thing"` in `public/index.html`, write the function in the right `public/js/flows/` file, add it to `actions` in `public/js/main.js` |
-| A new language | Add it to `LANGUAGES` and a full copy of the `en` block in `public/js/i18n/strings.js` (the tests check every key exists), plus a button in the `lang-switch` in `index.html` |
+| A new language | Add it to `LANGUAGES` and a full copy of the `en` block in `public/js/i18n/strings.js` (the tests check every key exists), plus a button in the `lang-switch` in `index.html` (it shrinks to the globe button by itself) |
 | A new server address | Write a handler in `server/routes/`, add a line in `server/router.js`, add anything it needs in `server/services.js` |
 | A new setting on the admin page | Add the field in `defaultSettings` and `cleanPatch` (`server/storage/settings.js`), a box in `public/admin/index.html`, and read/save it in `public/admin/admin.js` |
 | A new page file | Put it in `public/` and add it to `SHELL` in `public/sw.js` (a test reminds you), then bump `CACHE` |
