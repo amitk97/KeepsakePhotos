@@ -362,6 +362,11 @@ main { flex: 1; display: flex; flex-direction: column; justify-content: flex-sta
   font: 500 14px var(--sans);
 }
 .lang-switch button[aria-pressed="true"] { background: var(--green); color: var(--ivory); border-color: var(--green); }
+/* After a language is chosen: one small globe button instead of three */
+.lang-switch .lang-toggle { display: none; align-items: center; gap: 6px; background: transparent; border-color: transparent; color: var(--gold-text); font-size: 13px; }
+.lang-toggle svg { width: 16px; height: 16px; }
+.lang-switch.collapsed .lang-toggle { display: inline-flex; }
+.lang-switch.collapsed [data-lang] { display: none; }
 
 /* ---------- Before / after slider ---------- */
 
