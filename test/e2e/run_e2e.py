@@ -1,3 +1,4 @@
+import re
 """End-to-end browser test with a fake Gemini server (no API key needed).
 
 Run:  python3 test/e2e/run_e2e.py
@@ -275,7 +276,7 @@ def main():
             expect(page.locator("#step1")).to_be_visible()
             page.click("[data-action=begin]")
             assert page.input_value("#guestName") == ""
-            expect(page.locator("#submitBtn")).to_be_disabled()
+            expect(page.locator("#submitBtn")).to_have_class(re.compile("not-ready"))
 
             assert not errors, f"page errors: {errors}"
             phone.close()

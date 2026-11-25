@@ -36,14 +36,14 @@ export function showPhotoPreview(dataUrl) {
   $("photoPreviewImg").src = dataUrl;
   $("photoPreviewContainer").classList.remove("hidden");
   $("photoDropZone").classList.add("hidden");
-  $("submitBtn").disabled = false;
+  $("submitBtn").classList.remove("not-ready");
 }
 
 export function clearPhotoPreview() {
   $("photoPreviewImg").removeAttribute("src");
   $("photoPreviewContainer").classList.add("hidden");
   $("photoDropZone").classList.remove("hidden");
-  $("submitBtn").disabled = true;
+  $("submitBtn").classList.add("not-ready");
 }
 
 export function updateCharCounter(max) {
@@ -53,8 +53,23 @@ export function updateCharCounter(max) {
 }
 
 // Marks a field as wrong for screen readers and puts the cursor in it.
+// A short buzz (Android; iPhones don't allow websites to vibrate) and a little shake.
+export function nudge(el) {
+  try {
+    navigator.vibrate?.([60, 40, 60]);
+  } catch {
+    // vibration not allowed
+  }
+  if (!el) return;
+  el.classList.remove("shake");
+  void el.offsetWidth; // restart the animation if it's already running
+  el.classList.add("shake");
+  el.addEventListener("animationend", () => el.classList.remove("shake"), { once: true });
+}
+
 export function flagField(id) {
   const el = $(id);
+  nudge(el);
   el.setAttribute("aria-invalid", "true");
   el.setAttribute("aria-errormessage", "uploadErrorText");
   el.focus();
