@@ -7,6 +7,7 @@ import { createQueueHandler } from "./routes/queue.js";
 import { createKeepsakeHandler } from "./routes/keepsake.js";
 import { createAdminHandler } from "./routes/admin.js";
 import { createHealthHandler, createPublicSettingsHandler } from "./routes/info.js";
+import { createCountHandler, createPaintedHandler } from "./routes/count.js";
 
 export function createRouter(s) {
   const { config, logger } = s;
@@ -16,6 +17,17 @@ export function createRouter(s) {
     ["GET", "/api/health", createHealthHandler(s)],
     ["GET", "/api/settings", createPublicSettingsHandler(s)],
     ["GET", "/api/queue", createQueueHandler(s)],
+    ["GET", "/api/count", createCountHandler(s)],
+    [
+      "POST",
+      "/api/painted",
+      createPaintedHandler({
+        config,
+        paintedOnPhones: s.paintedOnPhones,
+        rateLimiter: s.limits.paintedPerPhone,
+        ipLimiter: s.limits.paintedPerAddress,
+      }),
+    ],
     [
       "POST",
       "/api/generate",

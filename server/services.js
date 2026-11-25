@@ -69,6 +69,7 @@ export function createServices(config, { provider, gemini, fetchImpl, drive: dri
     ready: settings.load(),
     queue: createQueue({ maxConcurrent: config.maxConcurrent, maxWaiting: config.maxWaiting }),
     portraitsToday: createDailyCounter(),
+    paintedOnPhones: createDailyCounter(), // keepsakes the free artists painted straight from guests' phones
     tickets: createTickets(),
     sessions: createSessions({ password: config.adminPassword }),
     limits: {
@@ -76,6 +77,8 @@ export function createServices(config, { provider, gemini, fetchImpl, drive: dri
       perAddress: createRateLimiter({ limit: config.rateLimitPerIpHour }),
       uploadsPerPhone: createRateLimiter({ limit: 30 }),
       uploadsPerAddress: createRateLimiter({ limit: 1000 }),
+      paintedPerPhone: createRateLimiter({ limit: 20 }),
+      paintedPerAddress: createRateLimiter({ limit: 600 }),
       adminLogins: createRateLimiter({ limit: 10, windowMs: 15 * 60_000 }),
     },
   };

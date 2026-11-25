@@ -3,7 +3,7 @@
 // Pages and code: network first (updates arrive straight away), saved copy if offline.
 // Fonts are part of the saved copy. Portrait requests (/api/) are never cached.
 
-const CACHE = "keepsake-v23";
+const CACHE = "keepsake-v24";
 const SHELL = [
   "./",
   "./index.html",
@@ -40,9 +40,11 @@ const SHELL = [
   "./js/services/drafts.js",
   "./js/services/share.js",
   "./js/services/siteSettings.js",
+  "./js/services/todayCount.js",
   "./js/state.js",
   "./js/ui/backgrounds.js",
   "./js/ui/compare.js",
+  "./js/ui/todayCount.js",
   "./js/ui/design.js",
   "./js/ui/dom.js",
 ];

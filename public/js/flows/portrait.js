@@ -14,6 +14,7 @@ import { loadImage } from "../media/photo.js";
 import { fetchQueuePosition, newRequestId, requestCaricature } from "../services/api.js";
 import { sendKeepsakeToHosts, stylePrompt } from "../services/siteSettings.js";
 import { paintWithFreeArtists } from "../ai/huggingFace.js";
+import { reportPainted } from "../services/todayCount.js";
 import { composePortrait, waitForFonts } from "../portrait/compose.js";
 import { goToStep } from "./navigation.js";
 
@@ -59,6 +60,7 @@ async function paint(requestId) {
   const { blob } = await paintWithFreeArtists(photo, stylePrompt(state.background), {
     onTry: (n, total) => ui.showStatus(n > 1 ? t("tryingArtist", n, total) : ""),
   });
+  reportPainted();
   return { ...(await blobToImage(blob)), ticket: null };
 }
 
