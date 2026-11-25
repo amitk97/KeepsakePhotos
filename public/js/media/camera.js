@@ -34,11 +34,6 @@ export function canUseLiveCamera() {
   return Boolean(window.isSecureContext && navigator.mediaDevices?.getUserMedia);
 }
 
-// Must be called directly from a tap/click: browsers only open the camera from a user gesture.
-export function openNativeCamera() {
-  $("nativeCameraInput").click();
-}
-
 export async function openLiveCamera() {
   stopTracks();
   stream = await navigator.mediaDevices.getUserMedia({

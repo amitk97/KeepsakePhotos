@@ -36,6 +36,14 @@ body {
 
 .hidden { display: none !important; }
 
+/* File inputs stay in the page (not display:none) so their labels can open them on every phone. */
+.file-input {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); border: 0; opacity: 0;
+}
+label.btn { cursor: pointer; user-select: none; -webkit-user-select: none; }
+label.btn:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+
 .sr-only {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;
