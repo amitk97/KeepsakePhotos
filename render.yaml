@@ -13,7 +13,7 @@ services:
       - key: TRUST_PROXY
         value: "true"
       - key: IMAGE_PROVIDERS
-        value: cloudflare,flux # tried in order; then the free on-phone watercolour
+        value: cloudflare,flux # tried in order; then the free Hugging Face artists from the phone
       - key: CLOUDFLARE_ACCOUNT_ID
         sync: false # from Cloudflare dashboard
       - key: CLOUDFLARE_API_TOKEN
@@ -28,7 +28,7 @@ services:
         sync: false # Modal settings store: keeps admin-page changes permanently
       - key: ADMIN_PASSWORD
         sync: false # your admin page password (/admin)
-      # Google Drive uploads: leave these unset until you connect Drive (SETUP.md)
+      # Google Drive uploads: leave these empty until you connect Drive; GOOGLE_DRIVE_FOLDER_ID stays empty (SETUP.md)
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
