@@ -3,34 +3,25 @@
 // Every style keeps the same rules (likeness, exact outfits, everyone in a group, watercolour, no text);
 // only the character changes. The admin page's style lab picks the one every guest gets.
 
+// Keep prompts SHORT (about 130 words in all). The AI reads only roughly the first 400 words, and every
+// object it is told about, even "no chairs" or "children smaller", tends to appear in the picture.
+// So: most important rules first, and describe what we want rather than listing things to avoid.
 const KEEP_RULES =
-  "Zoom out so everyone fits fully inside the picture: show the whole head and hair of every person, with empty paper above the tallest head (about a tenth of the picture), and never crop heads, hair, hands or feet at the edges. " +
-  "Keep each person instantly recognisable as themselves: the same face shape, eyes, eyebrows, nose, lips, smile, beard or moustache, glasses and any marks like a bindi or a mole. " +
-  "Then exaggerate these real features in a playful caricature way (bigger smile, bolder eyebrows, rounder cheeks), never replacing them with generic cartoon features. " +
-  "Keep each person's real hairstyle: the same length, colour, parting, fringe, curls or volume, and the same position (over a shoulder, behind an ear, in a bun or plait, under a dupatta or turban). " +
-  "Paint the hair in loose, exaggerated watercolour strokes, so it is clearly their hair but in caricature style. " +
-  "Keep everyone in their original positions relative to each other, and keep their real relative heights (children smaller, tall people taller) so family photos look natural. " +
-  "Keep each person's exact pose from the photo, with the same arm and hand positions. Only paint someone sitting if the photo clearly shows them sitting on something you can see (a car seat, chair, sofa or the floor); never stand a seated person up. " +
-  "If the legs are not in the photo, the person is standing: paint them standing upright, never sitting or cross-legged. " +
-  "Keep any jewellery, mehndi, glasses and turbans exactly as they are. " +
-  "Keep natural, true skin tones with no colour cast from the background. " +
-  "Paint only the main subjects: the people at the front who are posing for the photo, in focus and facing the camera. Leave out everyone else, such as people in the background, passers-by, or anyone partly cut off at the edges, and never add anyone. Include every main subject, each equally recognisable. " +
-  "Keep their outfits exactly the same: identical colours, fabrics, textures, sheen, patterns, embroidery, borders, " +
-  "drape, silhouette and jewellery. Do not change, simplify or restyle the clothing. " +
-  "Leave out any writing or logos on clothes rather than inventing letters. ";
+  "Paint only the main subjects posing at the front, the same number of people as in the photo; leave out people in the background. " +
+  "Keep every face recognisable: same face shape, eyes, nose, smile, beard, glasses, hairstyle and skin tone. " +
+  "Keep their outfits exactly the same: identical colours, fabrics, patterns and layers. " +
+  "Keep each person's pose and their places next to each other. ";
 
-const ENDING =
-  "Pure watercolour only: no ink outlines, no pencil, no sketch lines. " +
-  "BACKGROUND No text, no borders, no signature.";
+const ENDING = "Pure watercolour, no ink outlines. BACKGROUND No text.";
 
 // Background colours guests can pick. "BACKGROUND" in a prompt is replaced with the chosen one.
 export const BACKGROUNDS = [
-  { id: "ivory", swatch: "#f7f1e6", tint: "#eadfc8", prompt: "Background: white watercolour paper with only very faint, cloudy warm ivory washes around the edges, fading to plain white behind the people." },
-  { id: "blush", swatch: "#f3d9dc", tint: "#eab4bf", prompt: "Background: white watercolour paper with soft, cloudy blush pink watercolour washes in light and deeper shades of blush pink only, pooling darker in places and blooming where the paint bled, mostly around the edges and corners, fading to plain white paper behind and around the people, with rough uneven edges, faint paper grain and a few tiny blush pink speckles; light and pastel, never strong." },
-  { id: "sage", swatch: "#d5e0cf", tint: "#b3cca5", prompt: "Background: white watercolour paper with soft, cloudy sage green watercolour washes in light and deeper shades of sage green only, pooling darker in places and blooming where the paint bled, mostly around the edges and corners, fading to plain white paper behind and around the people, with rough uneven edges, faint paper grain and a few tiny sage green speckles; light and pastel, never strong." },
-  { id: "blue", swatch: "#d6e4f0", tint: "#a7c6e6", prompt: "Background: white watercolour paper with soft, cloudy powder blue watercolour washes in light and deeper shades of powder blue only, pooling darker in places and blooming where the paint bled, mostly around the edges and corners, fading to plain white paper behind and around the people, with rough uneven edges, faint paper grain and a few tiny powder blue speckles; light and pastel, never strong." },
-  { id: "lilac", swatch: "#e2d8ee", tint: "#c6b3e3", prompt: "Background: white watercolour paper with soft, cloudy lilac watercolour washes in light and deeper shades of lilac only, pooling darker in places and blooming where the paint bled, mostly around the edges and corners, fading to plain white paper behind and around the people, with rough uneven edges, faint paper grain and a few tiny lilac speckles; light and pastel, never strong." },
-  { id: "peach", swatch: "#f8dcc8", tint: "#f2bf9c", prompt: "Background: white watercolour paper with soft, cloudy peach watercolour washes in light and deeper shades of peach only, pooling darker in places and blooming where the paint bled, mostly around the edges and corners, fading to plain white paper behind and around the people, with rough uneven edges, faint paper grain and a few tiny peach speckles; light and pastel, never strong." },
+  { id: "ivory", swatch: "#f7f1e6", tint: "#eadfc8", prompt: "Background: plain white paper with faint warm ivory washes at the edges." },
+  { id: "blush", swatch: "#f3d9dc", tint: "#eab4bf", prompt: "Background: white paper with soft, cloudy blush pink watercolour washes around the edges, fading to white behind the people." },
+  { id: "sage", swatch: "#d5e0cf", tint: "#b3cca5", prompt: "Background: white paper with soft, cloudy sage green watercolour washes around the edges, fading to white behind the people." },
+  { id: "blue", swatch: "#d6e4f0", tint: "#a7c6e6", prompt: "Background: white paper with soft, cloudy powder blue watercolour washes around the edges, fading to white behind the people." },
+  { id: "lilac", swatch: "#e2d8ee", tint: "#c6b3e3", prompt: "Background: white paper with soft, cloudy lilac watercolour washes around the edges, fading to white behind the people." },
+  { id: "peach", swatch: "#f8dcc8", tint: "#f2bf9c", prompt: "Background: white paper with soft, cloudy peach watercolour washes around the edges, fading to white behind the people." },
 ];
 export const DEFAULT_BACKGROUND = "ivory";
 
@@ -44,13 +35,10 @@ export const STYLE_VARIANTS = [
     name: "Wedding caricature",
     description: "A real caricature: big heads, big smiles, small bodies. The default.",
     prompt:
-      "Turn this photo into a classic caricature painted in watercolour, like a caricature artist at a wedding. " +
-      "Paint standing people as full standing figures from head to feet (add matching legs and shoes if the photo is cropped), and seated people sitting. Make the head huge, about as big as the rest of the body, on a small, cute body. " +
-      "Give every person in the picture the same caricature treatment: each one gets the big head and small body, not just one of them. " +
-      "Strongly exaggerate each person's most distinctive features (smile, eyebrows, hair, beard, nose, cheeks) in a fun, flattering way. " +
-      "Remove the original background completely: no lights, lamps, decorations, furniture, plants, walls, stages or scenery from the photo. The only exception is what a person is sitting on (a car seat, chair or sofa), kept as a simple sketch so the pose makes sense. Keep anything a person is holding, such as a glass, bag or bouquet. " +
+      "Turn this photo into a watercolour caricature. " +
       KEEP_RULES +
-      "Paint the clothes in soft watercolour washes with clear detail. " +
+      "Give every person a big head on a small body and playfully exaggerate their real features. " +
+      "Show them full length; if their legs are outside the photo, paint them standing. " +
       ENDING,
   },
   {

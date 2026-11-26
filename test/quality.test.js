@@ -67,6 +67,8 @@ describe("watercolour styles", () => {
       assert.match(v.prompt, /outfits exactly the same/i);
       assert.match(v.prompt, /main subjects/i);
       assert.match(v.prompt, /people in the background/i);
+      // The AI only reads about the first 400 words; long prompts lose their last rules.
+      assert.ok(promptFor(v.id, "lilac").split(/\s+/).length <= 170, `${v.id} prompt is too long`);
     }
     assert.equal(styleById("nope").id, "caricature");
   });
