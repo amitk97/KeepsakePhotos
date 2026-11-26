@@ -4,7 +4,7 @@
 export class QueueFullError extends Error {}
 export class CancelledError extends Error {}
 
-// maxWaiting: beyond this many in line, new guests get the on-phone watercolour instead of a long wait.
+// maxWaiting: beyond this many in line, new guests are sent to the free artists instead of a long wait.
 export function createQueue({ maxConcurrent = 4, maxWaiting = 30 } = {}) {
   const waiting = []; // { id, start }
   const active = new Set();

@@ -54,13 +54,13 @@ export function loadConfig(env = process.env) {
     geminiApiBase: env.GEMINI_API_BASE || "https://generativelanguage.googleapis.com/v1beta/models",
     geminiTimeoutMs: int(env.GEMINI_TIMEOUT_MS, 90_000),
 
-    // "false" closes the AI studio: guests get the free on-phone watercolour instead.
+    // "false" closes the AI studio: guests get the free Hugging Face artists from their phones instead.
     studioOpen: env.STUDIO_OPEN !== "false",
-    // Most AI portraits per day across all guests (protects free allowances). After this: on-phone watercolour.
+    // Most AI portraits per day across all guests (protects free allowances). After this: the free Hugging Face artists.
     dailyPortraitCap: int(env.DAILY_PORTRAIT_CAP, 600),
     // How many portraits are painted at the same time; the rest wait in line.
     maxConcurrent: int(env.MAX_CONCURRENT, 4),
-    // Most guests waiting in line; anyone beyond gets the on-phone watercolour straight away.
+    // Most guests waiting in line; anyone beyond is sent to the free artists straight away.
     maxWaiting: int(env.MAX_WAITING, 30),
 
     // Admin page at /admin. Off unless a password is set.
