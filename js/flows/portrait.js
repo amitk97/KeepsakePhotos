@@ -43,6 +43,7 @@ async function blobToImage(blob) {
 
 // Returns { image, artUrl, ticket }. Throws if no artist could paint.
 async function paint(requestId) {
+  let ticket = null;
   // 1. Your server's engines.
   try {
     const { image: url, keepsakeTicket } = await requestCaricature({
@@ -55,6 +56,7 @@ async function paint(requestId) {
   } catch (err) {
     if (!err.useFilter) throw err; // a problem with the photo or limits: tell the guest
     console.info("Server artists unavailable, asking free artists:", err.message);
+    ticket = err.keepsakeTicket || null; // still lets this keepsake reach the hosts' Drive
   }
 
   // 2. Free artists on Hugging Face.
@@ -63,7 +65,7 @@ async function paint(requestId) {
     onTry: (n, total) => ui.showStatus(n > 1 ? t("tryingArtist", n, total) : ""),
   });
   reportPainted();
-  return { ...(await blobToImage(blob)), ticket: null };
+  return { ...(await blobToImage(blob)), ticket };
 }
 
 async function showKeepsake({ image, artUrl, ticket }) {
@@ -84,7 +86,7 @@ async function showKeepsake({ image, artUrl, ticket }) {
   composePortrait(canvas(), { image, guestName: state.guestName, message: state.guestMessage, nameLine, frame, monogram });
   canvas().setAttribute("aria-label", t("keepsakeAlt", state.guestName, state.guestMessage));
   showCompare(state.photoDataUrl, artUrl);
-  sendKeepsakeToHosts(canvas(), state.guestName, ticket);
+  sendKeepsakeToHosts(canvas(), state.guestName, ticket, state.photoDataUrl);
   goToStep(4);
   revealPainting();
 }
