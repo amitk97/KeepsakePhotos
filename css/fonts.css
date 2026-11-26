@@ -37,3 +37,4 @@
   font-display: swap;
   unicode-range: U+0900-097F, U+1CD0-1CFF, U+200C-200D, U+20A8, U+20B9, U+25CC, U+A830-A839, U+A8E0-A8FF;
 }
+.sheet-preview { max-width: 100%; border-radius: 12px; margin-top: 8px; }
