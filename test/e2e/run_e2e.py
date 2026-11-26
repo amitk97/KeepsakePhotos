@@ -293,7 +293,7 @@ def main():
             assert len(FakeGemini.requests) == before + 2
 
             # Result step: try another background, and save the original photo.
-            expect(page.locator(".again .swatch")).to_have_count(5)
+            expect(page.locator(".again .swatch")).to_have_count(6)
             page.locator(".again .swatch[aria-label='Lilac']").click()
             expect(page.locator(".again .background-name")).to_have_text("Lilac")
             with page.expect_download() as dl:
