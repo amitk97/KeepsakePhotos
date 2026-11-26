@@ -16,6 +16,8 @@ import { sendKeepsakeToHosts, stylePrompt } from "../services/siteSettings.js";
 import { paintWithFreeArtists } from "../ai/huggingFace.js";
 import { reportPainted } from "../services/todayCount.js";
 import { composePortrait, waitForFonts } from "../portrait/compose.js";
+import { tintPaper } from "../portrait/tint.js";
+import { backgroundById } from "../ai/styles.js";
 import { goToStep } from "./navigation.js";
 
 const canvas = () => ui.$("portraitCanvas");
@@ -65,6 +67,17 @@ async function paint(requestId) {
 }
 
 async function showKeepsake({ image, artUrl, ticket }) {
+  // Make sure the chosen background colour shows, even if the AI ignored it.
+  const tint = backgroundById(state.background).tint;
+  if (tint) {
+    try {
+      const tinted = tintPaper(image, tint);
+      image = tinted;
+      artUrl = tinted.toDataURL("image/jpeg", 0.92);
+    } catch (err) {
+      console.warn("Couldn't tint the background:", err); // e.g. a picture from another site that can't be read
+    }
+  }
   const nameLine = t("illustratedFor", state.guestName);
   await waitForFonts(`${nameLine} ${state.guestMessage}`);
   const { frame, monogram } = getDesign();
