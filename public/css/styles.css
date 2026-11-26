@@ -472,3 +472,11 @@ html.big-text body { zoom: 1.2; }
   #portraitCanvas.reveal { animation: none; -webkit-mask-image: none; mask-image: none; }
 }
 .today-count { margin: 0; font: italic 600 16px var(--serif); color: var(--gold-text); }
+
+/* Watercolour loader (public/js/ui/watercolourLoader.js) */
+.paint-loader { width: min(100%, 300px); margin: 0 auto; min-height: 160px; }
+.wc-loader { width: 100%; margin-inline: auto; opacity: 1; transition: opacity 160ms ease; pointer-events: none; }
+.wc-loader canvas { display: block; width: 100%; aspect-ratio: 900 / 480; }
+.wc-loader.wc-out { opacity: 0; }
+.wc-path { position: absolute; }
+@media (prefers-reduced-motion: reduce) { .wc-loader { transition: none; } }

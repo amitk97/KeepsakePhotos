@@ -19,6 +19,7 @@ import { composePortrait, waitForFonts } from "../portrait/compose.js";
 import { tintPaper } from "../portrait/tint.js";
 import { backgroundById } from "../ai/styles.js";
 import { goToStep } from "./navigation.js";
+import { createWatercolourLoader } from "../ui/watercolourLoader.js";
 
 const canvas = () => ui.$("portraitCanvas");
 
@@ -99,12 +100,25 @@ function revealPainting() {
   el.classList.add("reveal");
 }
 
+// The animated watercolour brush on the "Painting your portrait" screen.
+function startLoader() {
+  try {
+    const host = ui.$("paintLoader");
+    host.replaceChildren();
+    return createWatercolourLoader(host, { label: t("artistEyebrow") });
+  } catch (err) {
+    console.warn("Loader unavailable:", err);
+    return null;
+  }
+}
+
 // Also used by "Paint It Again" and "Try again".
 export async function makePortrait() {
   if (state.busy || !state.photoBase64) return;
   state.busy = true;
   goToStep(3);
   hideCompare();
+  const loader = startLoader();
   const stopProgress = ui.startProgress(t("progress"), SETTINGS.progressIntervalMs);
 
   const requestId = newRequestId();
@@ -123,6 +137,7 @@ export async function makePortrait() {
     clearInterval(poll);
     ui.showStatus("");
     stopProgress();
+    loader?.stop();
     state.busy = false;
   }
 }
