@@ -1,6 +1,7 @@
 // Makes sure the chosen background colour shows. The AI doesn't always follow colour instructions,
-// so after painting, the plain paper around the people (very light, almost colourless pixels) is
-// gently tinted with the guest's colour. Only paper joined to the picture's edges counts, so white
+// so after painting, a watercolour splash of the guest's colour is added on the plain paper behind
+// the people (very light, almost colourless pixels): strongest in the middle, with soft, uneven,
+// blotchy edges fading to white paper. Only paper joined to the picture's edges counts, so white
 // clothes, teeth and eyes inside the people are left alone.
 
 const LIGHT = 225; // pixels lighter than this (0–255) and nearly grey count as paper
@@ -53,9 +54,11 @@ export function tintPaper(image, hex) {
     if (p < w * (h - 1)) visit(p + w);
   }
 
+  const splash = splashShape(w, h);
   for (let p = 0, i = 0; p < paper.length; p++, i += 4) {
     if (!reached[p]) continue;
-    const k = paper[p];
+    const k = paper[p] * splash(p % w, (p / w) | 0);
+    if (k <= 0) continue;
     // Multiply-style tint keeps the paper's watercolour texture.
     px[i] += (px[i] * tr / 255 - px[i]) * k;
     px[i + 1] += (px[i + 1] * tg / 255 - px[i + 1]) * k;
@@ -63,4 +66,38 @@ export function tintPaper(image, hex) {
   }
   ctx.putImageData(data, 0, 0);
   return canvas;
+}
+
+// A random watercolour-splash shape: 1 in the middle, fading to 0 at a wobbly edge, with blotches.
+function splashShape(w, h) {
+  const rand = mulberry32((w * 7919 + h * 104729) >>> 0); // the same picture gets the same splash
+  const waves = Array.from({ length: 6 }, (_, n) => ({ f: n + 2, a: 0.05 + rand() * 0.06, p: rand() * 6.28 }));
+  const blots = Array.from({ length: 18 }, () => ({ x: 0.1 + rand() * 0.8, y: 0.1 + rand() * 0.8, r: 0.06 + rand() * 0.12, s: 0.2 + rand() * 0.3 }));
+  const cx = 0.5, cy = 0.5, rx = 0.56, ry = 0.5;
+  return (x, y) => {
+    const u = x / w, v = y / h;
+    const dx = (u - cx) / rx, dy = (v - cy) / ry;
+    const angle = Math.atan2(dy, dx);
+    let edge = 1;
+    for (const wv of waves) edge += wv.a * Math.sin(wv.f * angle + wv.p); // wobbly outline
+    const d = Math.hypot(dx, dy) / edge;
+    let k = d < 0.7 ? 1 : d > 1 ? 0 : 1 - smooth((d - 0.7) / 0.3);
+    for (const b of blots) {
+      const bd = Math.hypot(u - b.x, v - b.y) / b.r;
+      if (bd < 1) k += b.s * (1 - bd * bd) * (k > 0 ? 1 : 0.6); // darker pools, little bleeds past the edge
+    }
+    // Uneven strength inside the splash (0.65–1), like pigment settling unevenly.
+    return Math.min(1, k) * (0.65 + 0.35 * Math.min(1, k));
+  };
+}
+
+const smooth = (t) => t * t * (3 - 2 * t);
+
+function mulberry32(seed) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }

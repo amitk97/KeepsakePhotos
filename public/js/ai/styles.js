@@ -10,7 +10,7 @@ const KEEP_RULES =
   "Keep each person's real hairstyle: the same length, colour, parting, fringe, curls or volume, and the same position (over a shoulder, behind an ear, in a bun or plait, under a dupatta or turban). " +
   "Paint the hair in loose, exaggerated watercolour strokes, so it is clearly their hair but in caricature style. " +
   "Keep everyone in their original positions relative to each other, and keep their real relative heights (children smaller, tall people taller) so family photos look natural. " +
-  "Keep each person's pose: anyone standing stays standing and anyone sitting stays sitting. " +
+  "Keep each person's exact pose from the photo: anyone standing stays standing, and anyone sitting (in a car, on a chair, on a sofa or on the floor) stays sitting in the same position, with the same arm and hand positions; never stand a seated person up. " +
   "Keep any jewellery, mehndi, glasses and turbans exactly as they are. " +
   "Keep natural, true skin tones with no colour cast from the background. " +
   "Paint only the people who are in the photo, exactly as many as there are: never add anyone. If there are several people, include every one of them, each equally recognisable. " +
@@ -24,11 +24,11 @@ const ENDING =
 
 // Background colours guests can pick. "BACKGROUND" in a prompt is replaced with the chosen one.
 export const BACKGROUNDS = [
-  { id: "ivory", swatch: "#f7f1e6", prompt: "The background is plain soft ivory paper, almost white, with only a very faint wash." },
-  { id: "blush", swatch: "#f3d9dc", tint: "#f0cdd3", prompt: "The whole background behind the people is a clearly visible blush pink watercolour wash." },
-  { id: "sage", swatch: "#d5e0cf", tint: "#c9d9c0", prompt: "The whole background behind the people is a clearly visible sage green watercolour wash." },
-  { id: "blue", swatch: "#d6e4f0", tint: "#c7dbee", prompt: "The whole background behind the people is a clearly visible powder blue watercolour wash." },
-  { id: "lilac", swatch: "#e2d8ee", tint: "#d8cbea", prompt: "The whole background behind the people is a clearly visible lilac watercolour wash." },
+  { id: "ivory", swatch: "#f7f1e6", prompt: "Behind the people, only a very faint warm ivory watercolour splash on plain white paper." },
+  { id: "blush", swatch: "#f3d9dc", tint: "#eab4bf", prompt: "Behind the people, paint one loose, clearly visible blush pink watercolour splash with soft, uneven bleeding edges that fade out to plain white paper towards the edges of the picture; it is a splash, not a full background." },
+  { id: "sage", swatch: "#d5e0cf", tint: "#b3cca5", prompt: "Behind the people, paint one loose, clearly visible sage green watercolour splash with soft, uneven bleeding edges that fade out to plain white paper towards the edges of the picture; it is a splash, not a full background." },
+  { id: "blue", swatch: "#d6e4f0", tint: "#a7c6e6", prompt: "Behind the people, paint one loose, clearly visible powder blue watercolour splash with soft, uneven bleeding edges that fade out to plain white paper towards the edges of the picture; it is a splash, not a full background." },
+  { id: "lilac", swatch: "#e2d8ee", tint: "#c6b3e3", prompt: "Behind the people, paint one loose, clearly visible lilac watercolour splash with soft, uneven bleeding edges that fade out to plain white paper towards the edges of the picture; it is a splash, not a full background." },
 ];
 export const DEFAULT_BACKGROUND = "ivory";
 
@@ -43,10 +43,10 @@ export const STYLE_VARIANTS = [
     description: "A real caricature: big heads, big smiles, small bodies. The default.",
     prompt:
       "Turn this photo into a classic caricature painted in watercolour, like a caricature artist at a wedding. " +
-      "Show the whole person from head to feet. Make the head huge, about as big as the rest of the body, on a small, cute body. " +
+      "Show as much of each person as the photo shows, in their real pose: a standing person from head to feet, a seated person sitting. Make the head huge, about as big as the rest of the body, on a small, cute body. " +
       "Give every person in the picture the same caricature treatment: each one gets the big head and small body, not just one of them. " +
       "Strongly exaggerate each person's most distinctive features (smile, eyebrows, hair, beard, nose, cheeks) in a fun, flattering way. " +
-      "Replace the original background completely; do not keep the room or setting. " +
+      "Replace the original background, but keep what people are sitting on (a car seat, chair or sofa) as a simple watercolour sketch so seated poses still make sense. " +
       KEEP_RULES +
       "Paint the clothes in soft watercolour washes with clear detail. " +
       ENDING,
