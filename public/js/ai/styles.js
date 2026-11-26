@@ -5,7 +5,10 @@
 
 const KEEP_RULES =
   "Fit everyone fully inside the picture: show the whole head and hair of every person with clear empty space above the tallest head, and never crop heads, hair, hands or feet at the edges. " +
-  "Keep every person clearly recognisable: same face shape, skin tone, hair, beard and expression. " +
+  "Keep each person instantly recognisable as themselves: the same face shape, eyes, eyebrows, nose, lips, smile, beard or moustache, glasses and any marks like a bindi or a mole. " +
+  "Then exaggerate these real features in a playful caricature way (bigger smile, bolder eyebrows, rounder cheeks), never replacing them with generic cartoon features. " +
+  "Keep each person's real hairstyle: the same length, colour, parting, fringe, curls or volume, and the same position (over a shoulder, behind an ear, in a bun or plait, under a dupatta or turban). " +
+  "Paint the hair in loose, exaggerated watercolour strokes, so it is clearly their hair but in caricature style. " +
   "Keep everyone in their original positions relative to each other, and keep their real relative heights (children smaller, tall people taller) so family photos look natural. " +
   "Keep each person's pose: anyone standing stays standing and anyone sitting stays sitting. " +
   "Keep any jewellery, mehndi, glasses and turbans exactly as they are. " +
