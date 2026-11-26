@@ -1,7 +1,7 @@
 // Makes sure the chosen background colour shows. The AI doesn't always follow colour instructions,
 // so after painting, the background (light areas joined to the edges, stopped by the people's outlines)
-// is repainted as white watercolour paper with cloudy washes of the guest's one colour: mostly around
-// the edges and corners, fading to white behind the people. Any other colours the AI used there go. Only paper joined to the picture's edges counts, so white
+// is washed with cloudy washes of the guest's one colour, strongest around the edges and corners and
+// fading out towards the middle, so other colours the AI put around the edges are covered. Only paper joined to the picture's edges counts, so white
 // clothes, teeth and eyes inside the people are left alone.
 
 const BACKGROUND_LIGHT = 175; // pixels at least this light (0–255), joined to the edges, count as background
@@ -46,17 +46,17 @@ export function tintPaper(image, hex) {
     if (p < w * (h - 1)) visit(p + w);
   }
 
-  // Repaint the whole background as white paper with cloudy washes of the one chosen colour,
-  // replacing whatever colours the AI used there. The paper's own light and dark texture is kept.
+  // Wash the background towards white paper with cloudy washes of the one chosen colour. The strength
+  // follows the splash shape: strong at the edges and corners, fading to nothing in the middle, so
+  // anything in the middle (where the people are) stays as painted even if a light area was caught,
+  // e.g. white or gold clothes without a dark outline.
   const splash = splashShape(w, h);
   for (let p = 0, i = 0; p < light.length; p++, i += 4) {
     if (!reached[p]) continue;
-    const texture = Math.min(1, light[p] / 245); // 1 on clean paper, a bit less where the AI painted
     const k = splash(p % w, (p / w) | 0);
-    const paper = 252 * (0.96 + 0.04 * texture);
-    px[i] = paper + (tr * texture - paper) * k;
-    px[i + 1] = paper + (tg * texture - paper) * k;
-    px[i + 2] = paper + (tb * texture - paper) * k;
+    if (k <= 0) continue;
+    const texture = Math.min(1, light[p] / 245); // keeps the paper's light and dark grain
+    for (const [c, t] of [[0, tr], [1, tg], [2, tb]]) px[i + c] += (t * texture - px[i + c]) * k;
   }
   ctx.putImageData(data, 0, 0);
   return canvas;

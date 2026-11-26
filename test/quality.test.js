@@ -65,7 +65,8 @@ describe("watercolour styles", () => {
       assert.match(v.prompt, /watercolour/i);
       assert.match(v.prompt, /no ink outlines/i);
       assert.match(v.prompt, /outfits exactly the same/i);
-      assert.match(v.prompt, /several people/i);
+      assert.match(v.prompt, /main subjects/i);
+      assert.match(v.prompt, /people in the background/i);
     }
     assert.equal(styleById("nope").id, "caricature");
   });
