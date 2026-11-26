@@ -1,4 +1,5 @@
-// POST /api/keepsake  { image: "data:image/png;base64,…", guestName, ticket }
+// POST /api/keepsake  { image: "data:image/png;base64,…", original: "data:image/jpeg;base64,…", guestName, ticket }
+// The keepsake goes to "Keepsakes", the guest's own photo (optional) to "Original photos", with matching names.
 // ticket: the one-time keepsakeTicket from /api/generate, so only real portraits can be uploaded.
 // Queues the finished keepsake for upload to the shared Google Drive folder.
 // 204 when Drive isn't connected (nothing is sent anywhere), 202 when queued.
@@ -55,7 +56,13 @@ export function createKeepsakeHandler({ config, uploads, rateLimiter, ipLimiter,
     if (!match) return sendJson(res, 400, { error: "No keepsake received." });
     if (tickets && !tickets.redeem(body.ticket)) return sendJson(res, 403, { error: "Not allowed." });
 
-    uploads.add(keepsakeFileName(body.guestName), Buffer.from(match[2], "base64"), match[1]);
+    const name = keepsakeFileName(body.guestName);
+    uploads.add(name, Buffer.from(match[2], "base64"), match[1], "keepsakes");
+    const original = typeof body.original === "string" && body.original.match(DATA_URL_RE);
+    if (original) {
+      const ext = original[1] === "image/png" ? ".png" : ".jpg";
+      uploads.add(name.replace(/\.png$/, ext), Buffer.from(original[2], "base64"), original[1], "originals");
+    }
     logger.log(`Keepsake queued for Drive: ${body.guestName || "Guest"}`);
     return sendJson(res, 202, { queued: true });
   };

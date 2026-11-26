@@ -1,7 +1,6 @@
 // Makes sure the chosen background colour shows. The AI doesn't always follow colour instructions,
-// so after painting, a watercolour splash of the guest's colour is added on the plain paper behind
-// the people (very light, almost colourless pixels): strongest in the middle, with soft, uneven,
-// blotchy edges fading to white paper. Only paper joined to the picture's edges counts, so white
+// so after painting, cloudy washes of the guest's colour are added on the plain paper (very light,
+// almost colourless pixels): mostly around the edges and corners, fading to white behind the people. Only paper joined to the picture's edges counts, so white
 // clothes, teeth and eyes inside the people are left alone.
 
 const LIGHT = 225; // pixels lighter than this (0–255) and nearly grey count as paper
@@ -68,26 +67,38 @@ export function tintPaper(image, hex) {
   return canvas;
 }
 
-// A random watercolour-splash shape: 1 in the middle, fading to 0 at a wobbly edge, with blotches.
+// Watercolour-paper shape: cloudy washes of one colour, strongest around the edges and corners,
+// fading to white paper behind the people, with darker pools, lighter patches and a few speckles.
+// Returns strength 0–1 for each pixel.
 function splashShape(w, h) {
-  const rand = mulberry32((w * 7919 + h * 104729) >>> 0); // the same picture gets the same splash
-  const waves = Array.from({ length: 6 }, (_, n) => ({ f: n + 2, a: 0.05 + rand() * 0.06, p: rand() * 6.28 }));
-  const blots = Array.from({ length: 18 }, () => ({ x: 0.1 + rand() * 0.8, y: 0.1 + rand() * 0.8, r: 0.06 + rand() * 0.12, s: 0.2 + rand() * 0.3 }));
-  const cx = 0.5, cy = 0.5, rx = 0.56, ry = 0.5;
+  const rand = mulberry32((w * 7919 + h * 104729) >>> 0); // the same picture gets the same wash
+  const noise = valueNoise(rand);
+  const speckles = Array.from({ length: 40 }, () => ({ x: rand(), y: rand(), r: 0.002 + rand() * 0.004 }));
   return (x, y) => {
     const u = x / w, v = y / h;
-    const dx = (u - cx) / rx, dy = (v - cy) / ry;
-    const angle = Math.atan2(dy, dx);
-    let edge = 1;
-    for (const wv of waves) edge += wv.a * Math.sin(wv.f * angle + wv.p); // wobbly outline
-    const d = Math.hypot(dx, dy) / edge;
-    let k = d < 0.7 ? 1 : d > 1 ? 0 : 1 - smooth((d - 0.7) / 0.3);
-    for (const b of blots) {
-      const bd = Math.hypot(u - b.x, v - b.y) / b.r;
-      if (bd < 1) k += b.s * (1 - bd * bd) * (k > 0 ? 1 : 0.6); // darker pools, little bleeds past the edge
-    }
-    // Uneven strength inside the splash (0.65–1), like pigment settling unevenly.
-    return Math.min(1, k) * (0.65 + 0.35 * Math.min(1, k));
+    // 0 in the middle, rising towards the edges (an oval "vignette"), pushed around by noise so the edge is cloudy.
+    const dx = (u - 0.5) / 0.5, dy = (v - 0.5) / 0.5;
+    const edge = Math.hypot(dx * 0.95, dy) + (noise(u * 3, v * 3) - 0.5) * 0.6;
+    let k = smooth(Math.min(1, Math.max(0, (edge - 0.55) / 0.5)));
+    // Cloudy variation inside the wash: darker pools and lighter blooms.
+    const cloud = noise(u * 6 + 10, v * 6 + 10) * 0.6 + noise(u * 14 + 20, v * 14 + 20) * 0.4;
+    k *= 0.45 + 0.75 * cloud;
+    for (const s of speckles) if (Math.hypot(u - s.x, (v - s.y) * (h / w)) < s.r) k = Math.max(k, 0.9);
+    return Math.min(1, k);
+  };
+}
+
+// Smooth random noise (0–1), for cloudy shapes.
+function valueNoise(rand) {
+  const size = 64;
+  const grid = Float32Array.from({ length: size * size }, rand);
+  const at = (x, y) => grid[((y % size) + size) % size * size + (((x % size) + size) % size)];
+  return (x, y) => {
+    const x0 = Math.floor(x), y0 = Math.floor(y);
+    const fx = smooth(x - x0), fy = smooth(y - y0);
+    const top = at(x0, y0) + (at(x0 + 1, y0) - at(x0, y0)) * fx;
+    const bottom = at(x0, y0 + 1) + (at(x0 + 1, y0 + 1) - at(x0, y0 + 1)) * fx;
+    return top + (bottom - top) * fy;
   };
 }
 

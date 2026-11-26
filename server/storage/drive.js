@@ -1,7 +1,12 @@
 // Google Drive uploads, using the "drive.file" permission: the app can only see files and the
 // folder it created itself, nothing else in your Drive.
-// Switched off until GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN and
-// GOOGLE_DRIVE_FOLDER_ID are set (scripts/google-drive-auth.js gets them; see SETUP.md).
+// Switched off until GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_REFRESH_TOKEN are set (SETUP.md).
+// Folders: "Pooja & Amit Wedding Keepsakes" with "Keepsakes" and "Original photos" inside. The app creates
+// them itself on first use (with drive.file it can only use folders it made). GOOGLE_DRIVE_FOLDER_ID is
+// optional: the main folder's ID, if it was made by this app before (e.g. by scripts/google-drive-auth.js).
+
+export const FOLDER_NAMES = { main: "Pooja & Amit Wedding Keepsakes", keepsakes: "Keepsakes", originals: "Original photos" };
+const FOLDER_TYPE = "application/vnd.google-apps.folder";
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 
@@ -21,8 +26,9 @@ export function createDriveClient({
   let token = null;
   let tokenExpires = 0;
   let settingsFileId = null;
+  let folders = null; // { main, keepsakes, originals } once found or made
 
-  const configured = Boolean(clientId && clientSecret && refreshToken && folderId);
+  const configured = Boolean(clientId && clientSecret && refreshToken);
 
   async function accessToken() {
     if (token && now() < tokenExpires - 60_000) return token;
@@ -52,10 +58,39 @@ export function createDriveClient({
     return res;
   }
 
+  const escape = (text) => text.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+
+  async function findOrCreateFolder(name, parent) {
+    const q = encodeURIComponent(`name='${escape(name)}' and mimeType='${FOLDER_TYPE}' and '${parent}' in parents and trashed=false`);
+    const found = (await (await call(`${apiBase}/drive/v3/files?q=${q}&fields=files(id)&pageSize=1`)).json()).files?.[0];
+    if (found) return found.id;
+    const res = await call(`${apiBase}/drive/v3/files?fields=id`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, mimeType: FOLDER_TYPE, parents: [parent] }),
+    });
+    return (await res.json()).id;
+  }
+
+  let folderPromise = null;
+  function getFolders() {
+    if (folders) return Promise.resolve(folders);
+    folderPromise ||= (async () => {
+      const main = folderId || (await findOrCreateFolder(FOLDER_NAMES.main, "root"));
+      const keepsakes = await findOrCreateFolder(FOLDER_NAMES.keepsakes, main);
+      const originals = await findOrCreateFolder(FOLDER_NAMES.originals, main);
+      folders = { main, keepsakes, originals };
+      return folders;
+    })().finally(() => {
+      folderPromise = null;
+    });
+    return folderPromise;
+  }
+
   // Multipart upload: file details + content in one request.
-  async function upload({ name, mimeType, body, fileId = null }) {
+  async function upload({ name, mimeType, body, fileId = null, parent }) {
     const boundary = `keepsake${now().toString(36)}${Math.random().toString(36).slice(2)}`;
-    const meta = fileId ? { name } : { name, parents: [folderId] };
+    const meta = fileId ? { name } : { name, parents: [parent] };
     const head = Buffer.from(
       `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n` +
         `--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`
@@ -74,7 +109,8 @@ export function createDriveClient({
 
   async function findSettingsFile() {
     if (settingsFileId) return settingsFileId;
-    const q = encodeURIComponent(`name='keepsake-settings.json' and '${folderId}' in parents and trashed=false`);
+    const { main } = await getFolders();
+    const q = encodeURIComponent(`name='keepsake-settings.json' and '${main}' in parents and trashed=false`);
     const res = await call(`${apiBase}/drive/v3/files?q=${q}&fields=files(id)&pageSize=1`);
     settingsFileId = (await res.json()).files?.[0]?.id || null;
     return settingsFileId;
@@ -86,11 +122,16 @@ export function createDriveClient({
     // Just checks the sign-in works (wedding-day test).
     async check() {
       await accessToken();
-      await call(`${apiBase}/drive/v3/files/${encodeURIComponent(folderId)}?fields=id,name`);
+      const { main } = await getFolders();
+      await call(`${apiBase}/drive/v3/files/${encodeURIComponent(main)}?fields=id,name`);
       return true;
     },
 
-    uploadImage: (name, buffer, mimeType = "image/png") => upload({ name, mimeType, body: buffer }),
+    // kind: "keepsakes" (finished caricatures) or "originals" (guests' own photos)
+    async uploadImage(name, buffer, mimeType = "image/png", kind = "keepsakes") {
+      const f = await getFolders();
+      return upload({ name, mimeType, body: buffer, parent: f[kind] || f.keepsakes });
+    },
 
     // Settings backup, so changes from the admin page survive a server restart.
     settingsBackup: {
@@ -98,7 +139,8 @@ export function createDriveClient({
       configured,
       async save(settings) {
         const id = await findSettingsFile();
-        settingsFileId = await upload({ name: "keepsake-settings.json", mimeType: "application/json", body: JSON.stringify(settings, null, 2), fileId: id });
+        const { main } = await getFolders();
+        settingsFileId = await upload({ name: "keepsake-settings.json", mimeType: "application/json", body: JSON.stringify(settings, null, 2), fileId: id, parent: main });
       },
       async load() {
         const id = await findSettingsFile();
@@ -122,7 +164,7 @@ export function createUploadQueue(drive, { logger = console, attempts = 3, retry
     while (jobs.length) {
       const job = jobs[0];
       try {
-        await drive.uploadImage(job.name, job.buffer, job.mimeType);
+        await drive.uploadImage(job.name, job.buffer, job.mimeType, job.kind);
         stats.uploaded++;
         stats.lastUploadAt = new Date().toISOString();
         jobs.shift();
@@ -142,8 +184,8 @@ export function createUploadQueue(drive, { logger = console, attempts = 3, retry
   }
 
   return {
-    add(name, buffer, mimeType) {
-      jobs.push({ name, buffer, mimeType, tries: 0 });
+    add(name, buffer, mimeType, kind = "keepsakes") {
+      jobs.push({ name, buffer, mimeType, kind, tries: 0 });
       work();
     },
     stats: () => ({ ...stats, pending: jobs.length }),

@@ -173,20 +173,23 @@ describe("keepsake uploads", () => {
 
   test("queues for Drive when connected", async () => {
     const uploaded = [];
-    const drive = { configured: true, uploadImage: async (name, buf, type) => uploaded.push({ name, size: buf.length, type }), settingsBackup: { configured: false } };
+    const drive = { configured: true, uploadImage: async (name, buf, type, kind) => uploaded.push({ name, size: buf.length, type, kind }), settingsBackup: { configured: false } };
     const app = createApp(config(), { provider: okEngine(), logger: quiet, drive });
     await withServer(app, async (call) => {
       assert.equal((await call("/api/settings")).data.uploadsEnabled, true);
       assert.equal((await call("/api/keepsake", { image: "not an image" })).status, 400);
       assert.equal((await call("/api/keepsake", { image: PNG, guestName: "No ticket" })).status, 403);
       const { keepsakeTicket } = (await call("/api/generate", { image: PHOTO })).data;
-      assert.equal((await call("/api/keepsake", { image: PNG, guestName: "Maya / Arjun", ticket: keepsakeTicket })).status, 202);
+      assert.equal((await call("/api/keepsake", { image: PNG, original: `data:image/jpeg;base64,${PHOTO}`, guestName: "Maya / Arjun", ticket: keepsakeTicket })).status, 202);
       assert.equal((await call("/api/keepsake", { image: PNG, guestName: "Again", ticket: keepsakeTicket })).status, 403);
       while (!app.uploads.idle()) await new Promise((r) => setTimeout(r, 5));
     });
-    assert.equal(uploaded.length, 1);
+    assert.equal(uploaded.length, 2);
     assert.match(uploaded[0].name, /^\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2} Maya Arjun\.png$/);
     assert.equal(uploaded[0].type, "image/png");
+    assert.equal(uploaded[0].kind, "keepsakes");
+    assert.equal(uploaded[1].name, uploaded[0].name.replace(/\.png$/, ".jpg"));
+    assert.equal(uploaded[1].kind, "originals");
   });
 
   test("file names use UK time and are safe", () => {
@@ -198,9 +201,35 @@ describe("keepsake uploads", () => {
 describe("Drive client", () => {
   const base = { clientId: "id", clientSecret: "sec", refreshToken: "ref", folderId: "fold", apiBase: "https://drive.test", tokenUrl: "https://token.test" };
 
-  test("off until all four settings are present", () => {
+  test("off until sign-in details are present; folder ID optional", () => {
     assert.equal(createDriveClient({ ...base, refreshToken: "" }).configured, false);
     assert.equal(createDriveClient(base).configured, true);
+    assert.equal(createDriveClient({ ...base, folderId: "" }).configured, true);
+  });
+
+  test("creates the main folder and subfolders once, and files go in the right one", async () => {
+    const made = [];
+    const parents = [];
+    const fetchImpl = async (url, opts = {}) => {
+      if (url === "https://token.test") return json(200, { access_token: "tok" });
+      if (url.includes("/drive/v3/files?q=")) return json(200, { files: [] });
+      if (url.startsWith("https://drive.test/drive/v3/files?fields=id")) {
+        const meta = JSON.parse(opts.body);
+        made.push(`${meta.name} in ${meta.parents[0]}`);
+        return json(200, { id: `id:${meta.name}` });
+      }
+      parents.push(opts.body.toString().match(/"parents":\["([^"]+)"\]/)[1]);
+      return json(200, { id: "file" });
+    };
+    const drive = createDriveClient({ ...base, folderId: "", fetchImpl });
+    await drive.uploadImage("a.png", Buffer.from("x"));
+    await drive.uploadImage("a.jpg", Buffer.from("x"), "image/jpeg", "originals");
+    assert.deepEqual(made, [
+      "Pooja & Amit Wedding Keepsakes in root",
+      "Keepsakes in id:Pooja & Amit Wedding Keepsakes",
+      "Original photos in id:Pooja & Amit Wedding Keepsakes",
+    ]);
+    assert.deepEqual(parents, ["id:Keepsakes", "id:Original photos"]);
   });
 
   test("gets a token once, uploads into the folder as multipart", async () => {
@@ -208,17 +237,18 @@ describe("Drive client", () => {
     const fetchImpl = async (url, opts) => {
       calls.push({ url, opts });
       if (url === "https://token.test") return json(200, { access_token: "tok", expires_in: 3600 });
+      if (url.includes("/drive/v3/files?q=")) return json(200, { files: [{ id: "sub" }] });
       return json(200, { id: "file1" });
     };
     const drive = createDriveClient({ ...base, fetchImpl });
     await drive.uploadImage("a.png", Buffer.from("PNGDATA"));
     await drive.uploadImage("b.png", Buffer.from("PNGDATA"));
     assert.equal(calls.filter((c) => c.url === "https://token.test").length, 1);
-    const up = calls[1];
+    const up = calls.find((c) => c.url.includes("/upload/"));
     assert.match(up.url, /^https:\/\/drive\.test\/upload\/drive\/v3\/files\?uploadType=multipart/);
     assert.equal(up.opts.headers.Authorization, "Bearer tok");
     const body = up.opts.body.toString();
-    assert.match(body, /"parents":\["fold"\]/);
+    assert.match(body, /"parents":\["sub"\]/);
     assert.match(body, /"name":"a.png"/);
     assert.match(body, /PNGDATA/);
   });
@@ -229,7 +259,8 @@ describe("Drive client", () => {
     const fetchImpl = async (url, opts = {}) => {
       calls.push({ url, method: opts.method || "GET" });
       if (url === "https://token.test") return json(200, { access_token: "tok" });
-      if (url.includes("/drive/v3/files?q=")) return json(200, { files: stored ? [{ id: "set1" }] : [] });
+      if (url.includes("/drive/v3/files?q=") && url.includes("keepsake-settings")) return json(200, { files: stored ? [{ id: "set1" }] : [] });
+      if (url.includes("/drive/v3/files?q=")) return json(200, { files: [{ id: "sub" }] });
       if (url.includes("alt=media")) return json(200, { coupleNames: "From Drive" });
       stored = true;
       return json(200, { id: "set1" });

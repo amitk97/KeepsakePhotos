@@ -104,20 +104,26 @@ Admin-page changes are kept permanently in your Modal account once `SETTINGS_END
 
 ## Later: connect Google Drive (optional)
 
-Every finished keepsake is then uploaded to a shared folder. Until this is done, nothing is uploaded.
+Every finished keepsake goes to **Pooja & Amit Wedding Keepsakes → Keepsakes**, and the guest's own photo to **→ Original photos**, with matching file names. Needs the full server (Render); the GitHub test site never uploads. Account: **pooja.and.amit.wedding@gmail.com**.
 
-1. <https://console.cloud.google.com>: create a project, then **APIs & Services → Library →** enable **Google Drive API**.
-2. **OAuth consent screen:** *External*; add your app name and email; add the scope `…/auth/drive.file`; set **Publishing status → In production**. (In "Testing" mode Google ends the connection after 7 days. `drive.file` is a non-sensitive scope, so no Google review is needed.)
-3. **Credentials → Create credentials → OAuth client ID →** **Desktop app**. Copy the client ID and secret.
-4. On a computer with Node 22 and this repo:
-   ```bash
-   GOOGLE_CLIENT_ID=… GOOGLE_CLIENT_SECRET=… node scripts/google-drive-auth.js
-   ```
-   Sign in with the account that should own the folder. It creates **"Pooja & Amit Wedding Keepsakes"** and prints `GOOGLE_REFRESH_TOKEN` and `GOOGLE_DRIVE_FOLDER_ID`.
-5. Add all four `GOOGLE_…` values in Render. The admin page should say **Connected**.
-6. Share the folder with your partner in Google Drive.
+> **Don't make the folders yourself.** For privacy the app may only use folders it created, so it makes these three itself on first use. Delete or rename any folders with these names that you made by hand, or you'll end up with two sets.
 
-The app can only see files and the folder it created, nothing else in your Drive.
+Can all be done in a browser (phone or computer), signed in as the wedding Gmail:
+
+1. <https://console.cloud.google.com>: **create a project** (e.g. "Wedding keepsakes"), then **APIs & Services → Library →** search **Google Drive API → Enable**.
+2. **OAuth consent screen:** *External*; app name "Wedding keepsakes"; your email; **Data access → Add scope** `…/auth/drive.file`; then **Publish app / In production**. ("Testing" mode ends the connection after 7 days. `drive.file` needs no Google review.)
+3. **Clients → Create client → Web application.** Under *Authorised redirect URIs* add `https://developers.google.com/oauthplayground`. Copy the **Client ID** and **Client secret**.
+4. Open <https://developers.google.com/oauthplayground>:
+   - ⚙️ (top right) → tick **Use your own OAuth credentials** → paste the Client ID and secret.
+   - Step 1: in the box, type `https://www.googleapis.com/auth/drive.file` → **Authorize APIs** → sign in as the wedding Gmail → Allow. (If Google says the app isn't verified: **Advanced → Go to Wedding keepsakes**. It's your own app.)
+   - Step 2: **Exchange authorization code for tokens** → copy the **Refresh token**.
+5. In Render → Environment add `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`. Leave `GOOGLE_DRIVE_FOLDER_ID` empty.
+6. Open the admin page → **Wedding-day test**. Drive should say **Connected**, and the three folders appear in Drive.
+7. Share **Pooja & Amit Wedding Keepsakes** with anyone else who should see it.
+
+(Alternative on a computer with Node 22: `GOOGLE_CLIENT_ID=… GOOGLE_CLIENT_SECRET=… node scripts/google-drive-auth.js` with a *Desktop app* client instead of steps 3–4.)
+
+The app can only see the files and folders it created, nothing else in that Drive.
 
 ## Troubleshooting
 

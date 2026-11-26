@@ -12,8 +12,9 @@ test("background splash tints paper behind the people, fades at the edges, skips
   globalThis.document = { createElement: () => ({ getContext: () => ctx }) };
   const { tintPaper } = await import("../public/js/portrait/tint.js");
   tintPaper({ width: w, height: h }, "#c7dbee");
-  const near = at(10, 20);
-  assert.ok(px[near] < 240 && px[near + 2] > px[near], "paper beside the person turned blue");
-  assert.equal(px[at(0, 0)], 250, "corner stays white paper (it's a splash, not a full background)");
+  const corner = at(1, 1);
+  assert.ok(px[corner] < 245 && px[corner + 2] > px[corner], "paper near the corner turned blue");
+  const middle = at(14, 20);
+  assert.ok(px[middle] > px[corner], "paper near the people stays whiter than the edges");
   assert.equal(px[at(20, 20)], 250, "white shirt inside the person untouched");
 });
