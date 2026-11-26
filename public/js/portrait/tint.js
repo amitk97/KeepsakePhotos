@@ -1,10 +1,10 @@
 // Makes sure the chosen background colour shows. The AI doesn't always follow colour instructions,
-// so after painting, cloudy washes of the guest's colour are added on the plain paper (very light,
-// almost colourless pixels): mostly around the edges and corners, fading to white behind the people. Only paper joined to the picture's edges counts, so white
+// so after painting, the background (light areas joined to the edges, stopped by the people's outlines)
+// is repainted as white watercolour paper with cloudy washes of the guest's one colour: mostly around
+// the edges and corners, fading to white behind the people. Any other colours the AI used there go. Only paper joined to the picture's edges counts, so white
 // clothes, teeth and eyes inside the people are left alone.
 
-const LIGHT = 225; // pixels lighter than this (0–255) and nearly grey count as paper
-const GREY = 28; // how far from grey a pixel may be and still count as paper
+const BACKGROUND_LIGHT = 175; // pixels at least this light (0–255), joined to the edges, count as background
 
 export function tintPaper(image, hex) {
   const w = image.naturalWidth || image.width;
@@ -22,22 +22,15 @@ export function tintPaper(image, hex) {
   const data = ctx.getImageData(0, 0, w, h);
   const px = data.data;
 
-  // How "paper-like" each pixel is: 0 = not paper, up to 1 = clearly paper.
-  const paper = new Float32Array(w * h);
-  for (let p = 0, i = 0; p < paper.length; p++, i += 4) {
-    const r = px[i], g = px[i + 1], b = px[i + 2];
-    const light = (r + g + b) / 3;
-    const spread = Math.max(r, g, b) - Math.min(r, g, b);
-    if (light < LIGHT - 30 || spread > GREY) continue;
-    // Fades in from LIGHT-30 to LIGHT, so edges blend instead of making a hard line.
-    paper[p] = Math.min(1, (light - (LIGHT - 30)) / 30) * (1 - spread / GREY);
-  }
+  // Background = light pixels (paper, pale washes, pastel scenery the AI may have added) joined to
+  // the picture's edges. The people's dark outlines stop it, so faces and clothes inside are kept.
+  const light = new Float32Array(w * h);
+  for (let p = 0, i = 0; p < light.length; p++, i += 4) light[p] = (px[i] + px[i + 1] + px[i + 2]) / 3;
 
-  // Keep only paper reachable from the edges of the picture.
   const reached = new Uint8Array(w * h);
   const stack = [];
   const visit = (p) => {
-    if (!reached[p] && paper[p] > 0) {
+    if (!reached[p] && light[p] >= BACKGROUND_LIGHT) {
       reached[p] = 1;
       stack.push(p);
     }
@@ -53,15 +46,17 @@ export function tintPaper(image, hex) {
     if (p < w * (h - 1)) visit(p + w);
   }
 
+  // Repaint the whole background as white paper with cloudy washes of the one chosen colour,
+  // replacing whatever colours the AI used there. The paper's own light and dark texture is kept.
   const splash = splashShape(w, h);
-  for (let p = 0, i = 0; p < paper.length; p++, i += 4) {
+  for (let p = 0, i = 0; p < light.length; p++, i += 4) {
     if (!reached[p]) continue;
-    const k = paper[p] * splash(p % w, (p / w) | 0);
-    if (k <= 0) continue;
-    // Multiply-style tint keeps the paper's watercolour texture.
-    px[i] += (px[i] * tr / 255 - px[i]) * k;
-    px[i + 1] += (px[i + 1] * tg / 255 - px[i + 1]) * k;
-    px[i + 2] += (px[i + 2] * tb / 255 - px[i + 2]) * k;
+    const texture = Math.min(1, light[p] / 245); // 1 on clean paper, a bit less where the AI painted
+    const k = splash(p % w, (p / w) | 0);
+    const paper = 252 * (0.96 + 0.04 * texture);
+    px[i] = paper + (tr * texture - paper) * k;
+    px[i + 1] = paper + (tg * texture - paper) * k;
+    px[i + 2] = paper + (tb * texture - paper) * k;
   }
   ctx.putImageData(data, 0, 0);
   return canvas;
