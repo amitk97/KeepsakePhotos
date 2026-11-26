@@ -56,7 +56,7 @@ async function paint(requestId) {
   }
 
   // 2. Free artists on Hugging Face.
-  const photo = dataUrlToBlob(state.photoDataUrl);
+  const photo = dataUrlToBlob(`data:image/jpeg;base64,${state.photoBase64}`); // the copy with headroom
   const { blob } = await paintWithFreeArtists(photo, stylePrompt(state.background), {
     onTry: (n, total) => ui.showStatus(n > 1 ? t("tryingArtist", n, total) : ""),
   });
