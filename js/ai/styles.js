@@ -10,7 +10,8 @@ const KEEP_RULES =
   "Keep each person's real hairstyle: the same length, colour, parting, fringe, curls or volume, and the same position (over a shoulder, behind an ear, in a bun or plait, under a dupatta or turban). " +
   "Paint the hair in loose, exaggerated watercolour strokes, so it is clearly their hair but in caricature style. " +
   "Keep everyone in their original positions relative to each other, and keep their real relative heights (children smaller, tall people taller) so family photos look natural. " +
-  "Keep each person's exact pose from the photo: anyone standing stays standing, and anyone sitting (in a car, on a chair, on a sofa or on the floor) stays sitting in the same position, with the same arm and hand positions; never stand a seated person up. " +
+  "Keep each person's exact pose from the photo, with the same arm and hand positions. Only paint someone sitting if the photo clearly shows them sitting on something you can see (a car seat, chair, sofa or the floor); never stand a seated person up. " +
+  "If the legs are not in the photo, the person is standing: paint them standing upright, never sitting or cross-legged. " +
   "Keep any jewellery, mehndi, glasses and turbans exactly as they are. " +
   "Keep natural, true skin tones with no colour cast from the background. " +
   "Paint only the people who are in the photo, exactly as many as there are: never add anyone. If there are several people, include every one of them, each equally recognisable. " +
@@ -43,7 +44,7 @@ export const STYLE_VARIANTS = [
     description: "A real caricature: big heads, big smiles, small bodies. The default.",
     prompt:
       "Turn this photo into a classic caricature painted in watercolour, like a caricature artist at a wedding. " +
-      "Show as much of each person as the photo shows, in their real pose: a standing person from head to feet, a seated person sitting. Make the head huge, about as big as the rest of the body, on a small, cute body. " +
+      "Paint standing people as full standing figures from head to feet (add matching legs and shoes if the photo is cropped), and seated people sitting. Make the head huge, about as big as the rest of the body, on a small, cute body. " +
       "Give every person in the picture the same caricature treatment: each one gets the big head and small body, not just one of them. " +
       "Strongly exaggerate each person's most distinctive features (smile, eyebrows, hair, beard, nose, cheeks) in a fun, flattering way. " +
       "Replace the original background, but keep what people are sitting on (a car seat, chair or sofa) as a simple watercolour sketch so seated poses still make sense. " +

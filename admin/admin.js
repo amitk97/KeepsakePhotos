@@ -204,7 +204,7 @@ $("testBtn").addEventListener("click", async () => {
       ? r.studioOpen
         ? "✅ Ready: at least one AI engine works."
         : "⚠️ An AI engine works, but the studio is switched off."
-      : "⚠️ No AI engine worked. Guests will get the on-phone watercolour.";
+      : "⚠️ None of your own AI engines worked. Guests' phones will use the free Hugging Face artists (small shared allowance).";
     out.replaceChildren(el("p", { className: "verdict" }, verdict), el("ul", {}, ...items));
     out.classList.remove("hidden");
     refresh().catch(() => {});
