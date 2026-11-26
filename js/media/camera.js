@@ -1,4 +1,5 @@
-// Camera: phones use the native camera app (most reliable); laptops get a live preview.
+// Camera: a live preview inside the page (phones and laptops), so the browser never has to leave
+// the page. The phone's camera app is only the fallback.
 
 import { $ } from "../ui/dom.js";
 
@@ -21,14 +22,6 @@ function trapFocus(e) {
   }
 }
 
-export function isTouchDevice() {
-  return (
-    window.matchMedia("(pointer: coarse)").matches ||
-    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-    // iPadOS reports itself as a Mac
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
-  );
-}
 
 export function canUseLiveCamera() {
   return Boolean(window.isSecureContext && navigator.mediaDevices?.getUserMedia);

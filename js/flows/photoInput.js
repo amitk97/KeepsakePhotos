@@ -22,13 +22,16 @@ function setPhoto({ dataUrl, base64, smallBase64 }, original = null) {
   });
 }
 
-// The photo buttons are <label>s for the file inputs, so a tap opens the phone's camera or gallery
-// natively. On laptops with a webcam, "Take a Photo" opens the live preview instead.
+// The photo buttons are <label>s for the file inputs. "Choose Photo" opens the gallery natively.
+// "Take a Photo" opens a camera preview inside the page, on phones and laptops: opening the phone's
+// own camera app makes Android close the browser tab when memory is low, losing the photo
+// ("Unable to complete previous operation due to low memory"). If the preview can't start,
+// the phone's camera app is used instead.
 function onPhotoButton(event) {
   const label = event.currentTarget;
   ui.hideError();
   saveDraft({ step: 2 });
-  if (label.dataset.photo !== "camera" || camera.isTouchDevice() || !camera.canUseLiveCamera()) return; // let the label open the picker
+  if (label.dataset.photo !== "camera" || !camera.canUseLiveCamera()) return; // let the label open the picker
   event.preventDefault();
   camera.openLiveCamera().catch((err) => {
     console.warn("Live camera unavailable:", err);
