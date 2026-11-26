@@ -192,6 +192,34 @@ describe("keepsake uploads", () => {
     assert.equal(uploaded[1].kind, "originals");
   });
 
+  test("keepsake log sheet: created with a header, then rows appended", async () => {
+    let sheet = null;
+    const fetchImpl = async (url, opts = {}) => {
+      if (url === "https://token.test") return json(200, { access_token: "tok" });
+      if (url.includes("/drive/v3/files?q=")) {
+        const isLog = decodeURIComponent(url).includes("Keepsake log");
+        return json(200, { files: isLog ? (sheet !== null ? [{ id: "log1" }] : []) : [{ id: "sub" }] });
+      }
+      if (url.includes("/export?mimeType=text/csv")) return { ok: true, status: 200, text: async () => sheet, json: async () => ({}) };
+      if (url.includes("/upload/drive/v3/files/log1?uploadType=media")) {
+        sheet = opts.body;
+        return json(200, { id: "log1" });
+      }
+      const body = opts.body.toString();
+      assert.match(body, /application\/vnd\.google-apps\.spreadsheet/);
+      sheet = body.slice(body.indexOf('"Date"'), body.lastIndexOf("\r\n--"));
+      return json(200, { id: "log1" });
+    };
+    const drive = createDriveClient({ clientId: "id", clientSecret: "sec", refreshToken: "ref", folderId: "fold", apiBase: "https://drive.test", tokenUrl: "https://token.test", fetchImpl });
+    await drive.appendLogRow(["2028-04-15", "20:05:09", "Maya", 'Say "hi"', "lilac", "k", "o"]);
+    await drive.appendLogRow(["2028-04-15", "20:06:00", "Arjun", "", "sage", "k2", ""]);
+    const lines = sheet.trim().split("\n");
+    assert.equal(lines.length, 3);
+    assert.match(lines[0], /"Date","Time","Guest"/);
+    assert.match(lines[1], /"Say ""hi"""/);
+    assert.match(lines[2], /"Arjun"/);
+  });
+
   test("day folders use the UK date", () => {
     assert.equal(dayFolderName(new Date("2028-04-15T23:30:00Z")), "2028-04-16"); // BST: already the 16th
     assert.equal(dayFolderName(new Date("2028-01-15T23:30:00Z")), "2028-01-15");

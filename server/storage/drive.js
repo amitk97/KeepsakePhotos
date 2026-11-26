@@ -14,6 +14,9 @@ export function dayFolderName(date = new Date()) {
 
 export const FOLDER_NAMES = { main: "Pooja & Amit Wedding Keepsakes", keepsakes: "Keepsakes", originals: "Original photos" };
 const FOLDER_TYPE = "application/vnd.google-apps.folder";
+const SHEET_TYPE = "application/vnd.google-apps.spreadsheet";
+const LOG_NAME = "Keepsake log";
+export const LOG_COLUMNS = ["Date", "Time", "Guest", "Message", "Background", "Keepsake", "Original photo"];
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 
@@ -35,6 +38,25 @@ export function createDriveClient({
   let settingsFileId = null;
   let folders = null; // { main, keepsakes, originals } once found or made
   const dayFolders = new Map(); // "keepsakes/2028-04-15" → folder id
+  let logSheetId = null;
+
+  // The folder for one day inside "Keepsakes" or "Original photos" (made if needed, unless create is false).
+  async function dayFolder(kind, day, create = true) {
+    const f = await getFolders();
+    const parent = f[kind] || f.keepsakes;
+    const key = `${parent}/${day}`;
+    if (!dayFolders.has(key)) {
+      const id = create ? await findOrCreateFolder(day, parent) : await findFile(day, parent, FOLDER_TYPE);
+      if (!id) return null;
+      dayFolders.set(key, id);
+    }
+    return dayFolders.get(key);
+  }
+
+  async function findFile(name, parent, mimeType) {
+    const q = encodeURIComponent(`name='${escape(name)}' and mimeType='${mimeType}' and '${parent}' in parents and trashed=false`);
+    return (await (await call(`${apiBase}/drive/v3/files?q=${q}&fields=files(id)&pageSize=1`)).json()).files?.[0]?.id || null;
+  }
 
   const configured = Boolean(clientId && clientSecret && refreshToken);
 
@@ -96,9 +118,9 @@ export function createDriveClient({
   }
 
   // Multipart upload: file details + content in one request.
-  async function upload({ name, mimeType, body, fileId = null, parent }) {
+  async function upload({ name, mimeType, body, fileId = null, parent, convertTo }) {
     const boundary = `keepsake${now().toString(36)}${Math.random().toString(36).slice(2)}`;
-    const meta = fileId ? { name } : { name, parents: [parent] };
+    const meta = fileId ? { name } : { name, parents: [parent], ...(convertTo ? { mimeType: convertTo } : {}) };
     const head = Buffer.from(
       `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n` +
         `--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`
@@ -135,14 +157,50 @@ export function createDriveClient({
       return true;
     },
 
-    // kind: "keepsakes" (finished caricatures) or "originals" (guests' own photos)
+    // kind: "keepsakes" (finished caricatures) or "originals" (guests' own photos). Returns the file id.
     async uploadImage(name, buffer, mimeType = "image/png", kind = "keepsakes") {
-      const f = await getFolders();
-      const parent = f[kind] || f.keepsakes;
-      const day = dayFolderName(new Date(now()));
-      const key = `${parent}/${day}`;
-      if (!dayFolders.has(key)) dayFolders.set(key, await findOrCreateFolder(day, parent));
-      return upload({ name, mimeType, body: buffer, parent: dayFolders.get(key) });
+      return upload({ name, mimeType, body: buffer, parent: await dayFolder(kind, dayFolderName(new Date(now()))) });
+    },
+
+    // The "Keepsake log" Google Sheet in the main folder: one row per keepsake.
+    async appendLogRow(cells) {
+      const { main } = await getFolders();
+      const csvLine = cells.map((c) => `"${String(c ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ")}"`).join(",");
+      logSheetId ||= await findFile(LOG_NAME, main, SHEET_TYPE);
+      if (!logSheetId) {
+        const header = LOG_COLUMNS.map((c) => `"${c}"`).join(",");
+        logSheetId = await upload({ name: LOG_NAME, mimeType: "text/csv", body: `${header}\n${csvLine}\n`, parent: main, convertTo: SHEET_TYPE });
+        return;
+      }
+      const current = await (await call(`${apiBase}/drive/v3/files/${encodeURIComponent(logSheetId)}/export?mimeType=text/csv`)).text();
+      const body = `${current.replace(/\s+$/, "")}\n${csvLine}\n`;
+      await call(`${apiBase}/upload/drive/v3/files/${encodeURIComponent(logSheetId)}?uploadType=media`, {
+        method: "PATCH",
+        headers: { "Content-Type": "text/csv" },
+        body,
+      });
+    },
+
+    // Keepsakes saved on one day (for the contact sheet): [{ id, name }], oldest first.
+    async listDay(day) {
+      const parent = await dayFolder("keepsakes", day, false);
+      if (!parent) return [];
+      const q = encodeURIComponent(`'${parent}' in parents and mimeType contains 'image/' and trashed=false and not name contains 'Contact sheet'`);
+      const res = await call(`${apiBase}/drive/v3/files?q=${q}&orderBy=createdTime&fields=files(id,name)&pageSize=500`);
+      return (await res.json()).files || [];
+    },
+
+    // A small preview of an image in the folders (the app can only read its own files).
+    async thumbnail(id) {
+      const res = await call(`${apiBase}/drive/v3/files/${encodeURIComponent(id)}?fields=thumbnailLink`);
+      const link = (await res.json()).thumbnailLink;
+      const img = link ? await call(link.replace(/=s\d+$/, "=s600")) : await call(`${apiBase}/drive/v3/files/${encodeURIComponent(id)}?alt=media`);
+      return { type: img.headers.get("content-type") || "image/jpeg", body: Buffer.from(await img.arrayBuffer()) };
+    },
+
+    // Saves the contact sheet into that day's Keepsakes folder.
+    async saveContactSheet(day, buffer) {
+      return upload({ name: `Contact sheet ${day}.jpg`, mimeType: "image/jpeg", body: buffer, parent: await dayFolder("keepsakes", day) });
     },
 
     // Settings backup, so changes from the admin page survive a server restart.
@@ -176,17 +234,21 @@ export function createUploadQueue(drive, { logger = console, attempts = 3, retry
     while (jobs.length) {
       const job = jobs[0];
       try {
-        await drive.uploadImage(job.name, job.buffer, job.mimeType, job.kind);
-        stats.uploaded++;
-        stats.lastUploadAt = new Date().toISOString();
+        const result = job.task ? await job.task() : await drive.uploadImage(job.name, job.buffer, job.mimeType, job.kind);
+        if (!job.task) {
+          stats.uploaded++;
+          stats.lastUploadAt = new Date().toISOString();
+        }
         jobs.shift();
+        job.resolve(result);
       } catch (err) {
         job.tries++;
         logger.warn(`Drive upload failed (${job.name}, try ${job.tries}): ${err.message}`);
         if (job.tries >= attempts) {
-          stats.failed++;
+          if (!job.task) stats.failed++;
           stats.lastError = err.message;
           jobs.shift();
+          job.resolve(null);
         } else {
           await new Promise((r) => setTimeout(r, retryDelayMs * job.tries));
         }
@@ -196,9 +258,19 @@ export function createUploadQueue(drive, { logger = console, attempts = 3, retry
   }
 
   return {
+    // Resolves with the new file's id (or null if it finally failed).
     add(name, buffer, mimeType, kind = "keepsakes") {
-      jobs.push({ name, buffer, mimeType, kind, tries: 0 });
-      work();
+      return new Promise((resolve) => {
+        jobs.push({ name, buffer, mimeType, kind, tries: 0, resolve });
+        work();
+      });
+    },
+    // Any other Drive job that should run in turn (e.g. adding a row to the log).
+    addTask(task) {
+      return new Promise((resolve) => {
+        jobs.push({ task, tries: 0, resolve });
+        work();
+      });
     },
     stats: () => ({ ...stats, pending: jobs.length }),
     idle: () => !running && jobs.length === 0,

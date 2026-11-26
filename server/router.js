@@ -51,6 +51,7 @@ export function createRouter(s) {
         config,
         logger,
         uploads: s.uploads,
+        drive: s.drive,
         tickets: s.tickets,
         rateLimiter: s.limits.uploadsPerPhone,
         ipLimiter: s.limits.uploadsPerAddress,

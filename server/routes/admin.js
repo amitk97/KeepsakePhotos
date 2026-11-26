@@ -5,6 +5,9 @@
 //   POST /api/admin/settings { …changes }
 //   POST /api/admin/test     wedding-day check (paints one test portrait per engine)
 //   POST /api/admin/lab      style lab: { image, smallImage, engine, styles: [ids] } → one painting per style
+//   GET  /api/admin/day?day=2028-04-15        keepsakes saved to Drive that day (for the contact sheet)
+//   GET  /api/admin/thumb?id=…                small preview of one of them
+//   POST /api/admin/contact-sheet { day, image } saves the contact sheet (JPEG data address) to that day's folder
 
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -126,6 +129,34 @@ export function createAdminHandler({ config, sessions, settings, provider, queue
     if (pathname === "/api/admin/test" && req.method === "POST") {
       req.resume();
       return sendJson(res, 200, await weddingDayTest());
+    }
+
+    if (pathname.startsWith("/api/admin/day") || pathname.startsWith("/api/admin/thumb") || pathname === "/api/admin/contact-sheet") {
+      if (!drive?.configured || !drive.listDay) return sendJson(res, 400, { error: "Google Drive isn't connected." });
+      const url = new URL(req.url, "http://x");
+      try {
+        if (pathname === "/api/admin/day" && req.method === "GET") {
+          const day = url.searchParams.get("day") || "";
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return sendJson(res, 400, { error: "Pick a date." });
+          return sendJson(res, 200, { day, files: await drive.listDay(day) });
+        }
+        if (pathname === "/api/admin/thumb" && req.method === "GET") {
+          const id = url.searchParams.get("id") || "";
+          if (!/^[\w-]{10,100}$/.test(id)) return sendJson(res, 400, { error: "Bad id." });
+          const { type, body } = await drive.thumbnail(id);
+          res.writeHead(200, { "Content-Type": /^image\//.test(type) ? type : "image/jpeg", "Cache-Control": "private, max-age=3600" });
+          return res.end(body);
+        }
+        if (pathname === "/api/admin/contact-sheet" && req.method === "POST") {
+          const { day, image } = (await readJsonBody(req, 20 * 1024 * 1024).catch(() => null)) || {};
+          const m = typeof image === "string" && image.match(/^data:image\/jpeg;base64,([A-Za-z0-9+/]+={0,2})$/);
+          if (!m || !/^\d{4}-\d{2}-\d{2}$/.test(day || "")) return sendJson(res, 400, { error: "Invalid request." });
+          await drive.saveContactSheet(day, Buffer.from(m[1], "base64"));
+          return sendJson(res, 200, { ok: true });
+        }
+      } catch (err) {
+        return sendJson(res, 502, { error: err.message });
+      }
     }
 
     if (pathname === "/api/admin/lab" && req.method === "POST") {

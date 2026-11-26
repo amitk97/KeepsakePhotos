@@ -31,7 +31,9 @@ export function keepsakeFileName(guestName, date = new Date()) {
 }
 
 // rateLimiter: per phone; ipLimiter: per address (generous, for shared venue Wi-Fi).
-export function createKeepsakeHandler({ config, uploads, rateLimiter, ipLimiter, tickets, logger = console }) {
+const fileLink = (id) => (id ? `https://drive.google.com/file/d/${id}/view` : "");
+
+export function createKeepsakeHandler({ config, uploads, drive, rateLimiter, ipLimiter, tickets, logger = console }) {
   return async function handleKeepsake(req, res) {
     if (!uploads) {
       res.writeHead(204).end();
@@ -56,12 +58,22 @@ export function createKeepsakeHandler({ config, uploads, rateLimiter, ipLimiter,
     if (!match) return sendJson(res, 400, { error: "No keepsake received." });
     if (tickets && !tickets.redeem(body.ticket)) return sendJson(res, 403, { error: "Not allowed." });
 
-    const name = keepsakeFileName(body.guestName);
-    uploads.add(name, Buffer.from(match[2], "base64"), match[1], "keepsakes");
+    const made = new Date();
+    const name = keepsakeFileName(body.guestName, made);
+    const keepsakeId = uploads.add(name, Buffer.from(match[2], "base64"), match[1], "keepsakes");
     const original = typeof body.original === "string" && body.original.match(DATA_URL_RE);
-    if (original) {
-      const ext = original[1] === "image/png" ? ".png" : ".jpg";
-      uploads.add(name.replace(/\.png$/, ext), Buffer.from(original[2], "base64"), original[1], "originals");
+    const originalId = original
+      ? uploads.add(name.replace(/\.png$/, original[1] === "image/png" ? ".png" : ".jpg"), Buffer.from(original[2], "base64"), original[1], "originals")
+      : Promise.resolve(null);
+    // Then a row in the "Keepsake log" sheet, with links to both files.
+    if (drive?.appendLogRow) {
+      const [date, time] = name.split(" ");
+      const text = (v, max) => (typeof v === "string" ? v.slice(0, max) : "");
+      Promise.all([keepsakeId, originalId]).then(([k, o]) =>
+        uploads.addTask(() =>
+          drive.appendLogRow([date, time.replace(/-/g, ":"), text(body.guestName, 60) || "Guest", text(body.guestMessage, 120), text(body.background, 20), fileLink(k), fileLink(o)])
+        )
+      );
     }
     logger.log(`Keepsake queued for Drive: ${body.guestName || "Guest"}`);
     return sendJson(res, 202, { queued: true });

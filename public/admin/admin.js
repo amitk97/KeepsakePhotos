@@ -1,3 +1,4 @@
+import { initContactSheet } from "./contactSheet.js";
 // Admin page: status, studio switch, wedding-day test, wording and limits.
 
 import { processFile } from "../js/media/photo.js";
@@ -280,3 +281,5 @@ $("labBtn").addEventListener("click", async () => {
 /* ---------- Start ---------- */
 
 startDash().catch(() => showLogin());
+
+initContactSheet();
