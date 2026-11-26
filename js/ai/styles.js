@@ -14,7 +14,7 @@ const KEEP_RULES =
   "If the legs are not in the photo, the person is standing: paint them standing upright, never sitting or cross-legged. " +
   "Keep any jewellery, mehndi, glasses and turbans exactly as they are. " +
   "Keep natural, true skin tones with no colour cast from the background. " +
-  "Paint only the people who are in the photo, exactly as many as there are: never add anyone. If there are several people, include every one of them, each equally recognisable. " +
+  "Paint only the main subjects: the people at the front who are posing for the photo, in focus and facing the camera. Leave out everyone else, such as people in the background, passers-by, or anyone partly cut off at the edges, and never add anyone. Include every main subject, each equally recognisable. " +
   "Keep their outfits exactly the same: identical colours, fabrics, textures, sheen, patterns, embroidery, borders, " +
   "drape, silhouette and jewellery. Do not change, simplify or restyle the clothing. " +
   "Leave out any writing or logos on clothes rather than inventing letters. ";
@@ -47,7 +47,7 @@ export const STYLE_VARIANTS = [
       "Paint standing people as full standing figures from head to feet (add matching legs and shoes if the photo is cropped), and seated people sitting. Make the head huge, about as big as the rest of the body, on a small, cute body. " +
       "Give every person in the picture the same caricature treatment: each one gets the big head and small body, not just one of them. " +
       "Strongly exaggerate each person's most distinctive features (smile, eyebrows, hair, beard, nose, cheeks) in a fun, flattering way. " +
-      "Replace the original background, but keep what people are sitting on (a car seat, chair or sofa) as a simple watercolour sketch so seated poses still make sense. " +
+      "Remove the original background completely: no lights, lamps, decorations, furniture, plants, walls, stages or scenery from the photo. The only exception is what a person is sitting on (a car seat, chair or sofa), kept as a simple sketch so the pose makes sense. Keep anything a person is holding, such as a glass, bag or bouquet. " +
       KEEP_RULES +
       "Paint the clothes in soft watercolour washes with clear detail. " +
       ENDING,
