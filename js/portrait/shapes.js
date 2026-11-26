@@ -68,11 +68,13 @@ export function drawDoubleBorder(ctx, width, height, { outer, inner }) {
 }
 
 // Draws an image to fill a box, cropping the overflow (like CSS object-fit: cover).
-export function drawImageCover(ctx, img, x, y, w, h) {
+// Fills the box with the image. If it has to trim, it trims mostly from the bottom
+// (anchorY 0.15 = 15% of the trim at the top), so heads are kept and feet go first.
+export function drawImageCover(ctx, img, x, y, w, h, anchorY = 0.15) {
   const iw = img.naturalWidth || img.width;
   const ih = img.naturalHeight || img.height;
   const scale = Math.max(w / iw, h / ih);
   const dw = iw * scale;
   const dh = ih * scale;
-  ctx.drawImage(img, x - (dw - w) / 2, y - (dh - h) / 2, dw, dh);
+  ctx.drawImage(img, x - (dw - w) / 2, y - (dh - h) * anchorY, dw, dh);
 }

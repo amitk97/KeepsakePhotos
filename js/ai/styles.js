@@ -4,7 +4,7 @@
 // only the character changes. The admin page's style lab picks the one every guest gets.
 
 const KEEP_RULES =
-  "Fit everyone fully inside the picture: show the whole head and hair of every person with clear empty space above the tallest head, and never crop heads, hair, hands or feet at the edges. " +
+  "Zoom out so everyone fits fully inside the picture: show the whole head and hair of every person, with empty paper above the tallest head (about a tenth of the picture), and never crop heads, hair, hands or feet at the edges. " +
   "Keep each person instantly recognisable as themselves: the same face shape, eyes, eyebrows, nose, lips, smile, beard or moustache, glasses and any marks like a bindi or a mole. " +
   "Then exaggerate these real features in a playful caricature way (bigger smile, bolder eyebrows, rounder cheeks), never replacing them with generic cartoon features. " +
   "Keep each person's real hairstyle: the same length, colour, parting, fringe, curls or volume, and the same position (over a shoulder, behind an ear, in a bun or plait, under a dupatta or turban). " +

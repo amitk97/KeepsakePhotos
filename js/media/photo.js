@@ -84,11 +84,32 @@ export function toResizedJpeg(source, maxEdge = SETTINGS.maxPhotoEdge, quality =
   return { dataUrl, base64: dataUrl.split(",")[1] };
 }
 
-// The full photo for the AI, plus a small copy for engines that need one.
+// Adds plain paper above and around the photo before it goes to the AI. A close-up selfie
+// otherwise leaves no room: asked for a full caricature, the AI pushes the head off the top.
+export const HEADROOM = { top: 0.18, sides: 0.08, paper: "#f7f1e6" };
+
+export function withHeadroom(source) {
+  const w = source.naturalWidth || source.width;
+  const h = source.naturalHeight || source.height;
+  if (!w || !h) throw new PhotoError("errUnreadable");
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(w * (1 + 2 * HEADROOM.sides));
+  canvas.height = Math.round(h * (1 + HEADROOM.top));
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = HEADROOM.paper;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(source, Math.round(w * HEADROOM.sides), canvas.height - h, w, h); // photo at the bottom
+  return canvas;
+}
+
+// The guest's photo for previews (dataUrl), plus the copies for the AI (with headroom):
+// a full one, and a small one for engines that need it.
 export function preparePhoto(source) {
-  const full = toResizedJpeg(source);
-  const small = toResizedJpeg(source, SETTINGS.smallPhotoEdge, 0.88);
-  return { dataUrl: full.dataUrl, base64: full.base64, smallBase64: small.base64 };
+  const preview = toResizedJpeg(source);
+  const roomy = withHeadroom(source);
+  const full = toResizedJpeg(roomy);
+  const small = toResizedJpeg(roomy, SETTINGS.smallPhotoEdge, 0.88);
+  return { dataUrl: preview.dataUrl, base64: full.base64, smallBase64: small.base64 };
 }
 
 export async function processFile(file) {
