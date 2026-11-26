@@ -138,7 +138,8 @@ export function createAdminHandler({ config, sessions, settings, provider, queue
         if (pathname === "/api/admin/day" && req.method === "GET") {
           const day = url.searchParams.get("day") || "";
           if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return sendJson(res, 400, { error: "Pick a date." });
-          return sendJson(res, 200, { day, files: await drive.listDay(day) });
+          const [files, hasSheet] = await Promise.all([drive.listDay(day), drive.hasContactSheet(day)]);
+          return sendJson(res, 200, { day, files, hasSheet });
         }
         if (pathname === "/api/admin/thumb" && req.method === "GET") {
           const id = url.searchParams.get("id") || "";

@@ -198,6 +198,13 @@ export function createDriveClient({
       return { type: img.headers.get("content-type") || "image/jpeg", body: Buffer.from(await img.arrayBuffer()) };
     },
 
+    // Whether that day already has a contact sheet (so the morning job doesn't make two).
+    async hasContactSheet(day) {
+      const parent = await dayFolder("keepsakes", day, false);
+      if (!parent) return false;
+      return Boolean(await findFile(`Contact sheet ${day}.jpg`, parent, "image/jpeg"));
+    },
+
     // Saves the contact sheet into that day's Keepsakes folder.
     async saveContactSheet(day, buffer) {
       return upload({ name: `Contact sheet ${day}.jpg`, mimeType: "image/jpeg", body: buffer, parent: await dayFolder("keepsakes", day) });

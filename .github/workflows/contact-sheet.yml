@@ -1,0 +1,26 @@
+# Each morning: makes yesterday's contact sheet and saves it to that day's Keepsakes folder in Drive.
+# Needs the repository secret ADMIN_PASSWORD (Settings → Secrets and variables → Actions).
+# Optional repository variable SITE_URL (defaults to https://keepsakephotos.onrender.com).
+# Run it by hand from the Actions tab too, optionally for a chosen date.
+name: Morning contact sheet
+on:
+  schedule:
+    - cron: "17 8 * * *" # 08:17 UTC = 09:17 in UK summer, 08:17 in winter
+  workflow_dispatch:
+    inputs:
+      day:
+        description: "Date (YYYY-MM-DD). Leave empty for yesterday."
+        required: false
+jobs:
+  sheet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install pillow
+      - run: python scripts/contact_sheet.py ${{ github.event.inputs.day }}
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://keepsakephotos.onrender.com' }}
