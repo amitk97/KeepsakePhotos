@@ -7,7 +7,7 @@ import path from "node:path";
 import { createApp } from "../server/app.js";
 import { loadConfig } from "../server/config.js";
 import { cleanPatch } from "../server/storage/settings.js";
-import { createDriveClient, createUploadQueue } from "../server/storage/drive.js";
+import { createDriveClient, createUploadQueue, dayFolderName } from "../server/storage/drive.js";
 import { keepsakeFileName } from "../server/routes/keepsake.js";
 
 const quiet = { log() {}, warn() {}, error() {} };
@@ -192,6 +192,11 @@ describe("keepsake uploads", () => {
     assert.equal(uploaded[1].kind, "originals");
   });
 
+  test("day folders use the UK date", () => {
+    assert.equal(dayFolderName(new Date("2028-04-15T23:30:00Z")), "2028-04-16"); // BST: already the 16th
+    assert.equal(dayFolderName(new Date("2028-01-15T23:30:00Z")), "2028-01-15");
+  });
+
   test("file names use UK time and are safe", () => {
     assert.equal(keepsakeFileName("Maya & Arjun", new Date("2028-04-15T19:05:09Z")), "2028-04-15 20-05-09 Maya & Arjun.png");
     assert.equal(keepsakeFileName("", new Date("2028-01-01T00:00:00Z")), "2028-01-01 00-00-00 Guest.png");
@@ -224,12 +229,17 @@ describe("Drive client", () => {
     const drive = createDriveClient({ ...base, folderId: "", fetchImpl });
     await drive.uploadImage("a.png", Buffer.from("x"));
     await drive.uploadImage("a.jpg", Buffer.from("x"), "image/jpeg", "originals");
+    const day = dayFolderName();
     assert.deepEqual(made, [
       "Pooja & Amit Wedding Keepsakes in root",
       "Keepsakes in id:Pooja & Amit Wedding Keepsakes",
       "Original photos in id:Pooja & Amit Wedding Keepsakes",
+      `${day} in id:Keepsakes`,
+      `${day} in id:Original photos`,
     ]);
-    assert.deepEqual(parents, ["id:Keepsakes", "id:Original photos"]);
+    assert.deepEqual(parents, [`id:${day}`, `id:${day}`]);
+    await drive.uploadImage("b.png", Buffer.from("x"));
+    assert.equal(made.length, 5, "the day folder is made once, then reused");
   });
 
   test("gets a token once, uploads into the folder as multipart", async () => {

@@ -1,9 +1,16 @@
 // Google Drive uploads, using the "drive.file" permission: the app can only see files and the
 // folder it created itself, nothing else in your Drive.
 // Switched off until GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_REFRESH_TOKEN are set (SETUP.md).
-// Folders: "Pooja & Amit Wedding Keepsakes" with "Keepsakes" and "Original photos" inside. The app creates
+// Folders: "Pooja & Amit Wedding Keepsakes" with "Keepsakes" and "Original photos" inside, each with a
+// folder per day (e.g. "2028-04-15"). The app creates
 // them itself on first use (with drive.file it can only use folders it made). GOOGLE_DRIVE_FOLDER_ID is
 // optional: the main folder's ID, if it was made by this app before (e.g. by scripts/google-drive-auth.js).
+
+// Inside "Keepsakes" and "Original photos", one folder per day, e.g. "2028-04-15", made the first
+// time something is saved that day (UK date, so it sorts in order).
+export function dayFolderName(date = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+}
 
 export const FOLDER_NAMES = { main: "Pooja & Amit Wedding Keepsakes", keepsakes: "Keepsakes", originals: "Original photos" };
 const FOLDER_TYPE = "application/vnd.google-apps.folder";
@@ -27,6 +34,7 @@ export function createDriveClient({
   let tokenExpires = 0;
   let settingsFileId = null;
   let folders = null; // { main, keepsakes, originals } once found or made
+  const dayFolders = new Map(); // "keepsakes/2028-04-15" → folder id
 
   const configured = Boolean(clientId && clientSecret && refreshToken);
 
@@ -130,7 +138,11 @@ export function createDriveClient({
     // kind: "keepsakes" (finished caricatures) or "originals" (guests' own photos)
     async uploadImage(name, buffer, mimeType = "image/png", kind = "keepsakes") {
       const f = await getFolders();
-      return upload({ name, mimeType, body: buffer, parent: f[kind] || f.keepsakes });
+      const parent = f[kind] || f.keepsakes;
+      const day = dayFolderName(new Date(now()));
+      const key = `${parent}/${day}`;
+      if (!dayFolders.has(key)) dayFolders.set(key, await findOrCreateFolder(day, parent));
+      return upload({ name, mimeType, body: buffer, parent: dayFolders.get(key) });
     },
 
     // Settings backup, so changes from the admin page survive a server restart.

@@ -104,7 +104,7 @@ Admin-page changes are kept permanently in your Modal account once `SETTINGS_END
 
 ## Later: connect Google Drive (optional)
 
-Every finished keepsake goes to **Pooja & Amit Wedding Keepsakes → Keepsakes**, and the guest's own photo to **→ Original photos**, with matching file names. Needs the full server (Render); the GitHub test site never uploads. Account: **pooja.and.amit.wedding@gmail.com**.
+Every finished keepsake goes to **Pooja & Amit Wedding Keepsakes → Keepsakes → (date)**, and the guest's own photo to **→ Original photos → (date)**, with matching file names. A new date folder (e.g. 2028-04-15) is made the first time something is saved that day. Needs the full server (Render); the GitHub test site never uploads. Account: **pooja.and.amit.wedding@gmail.com**.
 
 > **Don't make the folders yourself.** For privacy the app may only use folders it created, so it makes these three itself on first use. Delete or rename any folders with these names that you made by hand, or you'll end up with two sets.
 
