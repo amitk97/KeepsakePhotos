@@ -3,7 +3,7 @@
 // Pages and code: network first (updates arrive straight away), saved copy if offline.
 // Fonts are part of the saved copy. Portrait requests (/api/) are never cached.
 
-const CACHE = "keepsake-v38";
+const CACHE = "keepsake-v39";
 const SHELL = [
   "./",
   "./index.html",
@@ -14,6 +14,11 @@ const SHELL = [
   "./fonts/plus-jakarta-sans.woff",
   "./fonts/noto-serif-gujarati.woff",
   "./fonts/noto-serif-devanagari.woff",
+  "./img/loader/infinity.webp",
+  "./img/loader/handle.webp",
+  "./img/loader/ferrule.webp",
+  "./img/loader/normal.webp",
+  "./img/loader/heavy.webp",
   "./favicon.svg",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
@@ -46,6 +51,7 @@ const SHELL = [
   "./js/ui/backgrounds.js",
   "./js/ui/bigText.js",
   "./js/ui/compare.js",
+  "./js/ui/watercolourLoader.js",
   "./js/ui/langSwitch.js",
   "./js/ui/todayCount.js",
   "./js/ui/design.js",
