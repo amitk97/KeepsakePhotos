@@ -86,7 +86,7 @@ async function showKeepsake({ image, artUrl, ticket }) {
   composePortrait(canvas(), { image, guestName: state.guestName, message: state.guestMessage, nameLine, frame, monogram });
   canvas().setAttribute("aria-label", t("keepsakeAlt", state.guestName, state.guestMessage));
   showCompare(state.photoDataUrl, artUrl);
-  sendKeepsakeToHosts(canvas(), state.guestName, ticket, state.photoDataUrl);
+  sendKeepsakeToHosts(canvas(), state.guestName, ticket, state.photoDataUrl, { guestMessage: state.guestMessage, background: state.background });
   goToStep(4);
   revealPainting();
 }

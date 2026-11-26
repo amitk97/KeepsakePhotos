@@ -43,13 +43,14 @@ export async function loadSiteSettings() {
 // Sends the finished keepsake to the hosts' shared folder. Does nothing until Google Drive is connected.
 // ticket: the one-time keepsakeTicket the server sent with the portrait (or with the "use the phone" reply).
 // original: the guest's photo (data: address), saved alongside in "Original photos".
-export async function sendKeepsakeToHosts(canvas, guestName, ticket, original) {
+// extra: { guestMessage, background } for the "Keepsake log" sheet.
+export async function sendKeepsakeToHosts(canvas, guestName, ticket, original, extra = {}) {
   if (!uploadsEnabled || !ticket) return;
   try {
     await fetch("api/keepsake", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Device-Id": deviceId() },
-      body: JSON.stringify({ image: canvas.toDataURL("image/png"), original, guestName, ticket }),
+      body: JSON.stringify({ image: canvas.toDataURL("image/png"), original, guestName, ticket, ...extra }),
       keepalive: false,
     });
   } catch {
